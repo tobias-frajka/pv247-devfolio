@@ -30,7 +30,7 @@ Metadata is generated per profile via `generateMetadata`:
 
 ## Dashboard editor
 
-Every dashboard page follows the same shape: a header with the section title, a form filling the main column, and a completeness score + quick actions in the sidebar. All forms use React Hook Form with the corresponding Zod schema from `src/schemas/`.
+Every dashboard page follows the same shape: a header with the section title, a form filling the main column, and a completeness score + quick actions in the sidebar. All forms use React Hook Form with the corresponding Zod schema from `schemas/`.
 
 ### `/dashboard/profile`
 
@@ -62,7 +62,7 @@ Username change (with warning that it breaks old share links), account deletion,
 
 ## AI assist
 
-Three AI features, all routed through server actions in `src/server-actions/ai.ts`. Each one makes a single Claude API call, returns the result, and lets the user edit before saving.
+Three AI features, all routed through server actions in `server-actions/ai.ts`. Each one makes a single Claude API call, returns the result, and lets the user edit before saving.
 
 The client side uses Tanstack Query mutations so we get loading states on the buttons. On success, the form field gets updated via `setValue` and the user can edit further.
 

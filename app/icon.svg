@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
+  <rect width="32" height="32" rx="7" fill="#f4f0e6"/>
+  <text x="16" y="16"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-family="ui-monospace, 'Geist Mono', 'JetBrains Mono', Menlo, monospace"
+        font-weight="700"
+        font-size="15"
+        fill="#1d1a14">{ }</text>
+  <circle cx="29" cy="29" r="6" fill="#1d1a14"/>
+  <circle cx="29" cy="29" r="4" fill="#7ec396"/>
+</svg>

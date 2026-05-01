@@ -41,12 +41,23 @@ The editor has a few extras that make filling out a portfolio less tedious:
 
 ---
 
+## Design system
+
+The visual language is locked. The full spec — tokens, components, layout patterns, voice, recommended implementation order — lives in [`docs/design_handoff_devfolio/README.md`](./docs/design_handoff_devfolio/README.md).
+
+`app/globals.css` is the production token sheet (DevFolio raw tokens + shadcn aliases + Tailwind v4 `@theme` bridge). Every shadcn primitive picks the look up automatically. Fonts are Geist + Geist Mono via `next/font/google`. The default theme is dark — set on `<html data-theme="dark">` in `app/layout.tsx`. Light mode is included for free; switching is just a `data-theme` attribute swap.
+
+The interactive preview at `docs/design_handoff_devfolio/preview/design-system.html` opens in any browser without a build step and is the source of truth for layouts and copy.
+
+---
+
 ## Docs
 
 Deeper references live in the [`docs/`](./docs) folder:
 
 - [`docs/architecture.md`](./docs/architecture.md) — data flow, rendering model, caching, auth flow, end-to-end request lifecycles
 - [`docs/features.md`](./docs/features.md) — per-feature specs, AI prompts, completeness score formula, broken link checker behavior
+- [`docs/design_handoff_devfolio/`](./docs/design_handoff_devfolio) — design system handoff: tokens, components, mockups
 
 The rest of this file is the short version.
 
@@ -58,11 +69,11 @@ The rest of this file is the short version.
 
 The public profile page (`/[username]`) is a React Server Component that queries Drizzle directly. There's no `/api/profile/:username` endpoint — that would just be calling our own server from our own server. Same applies inside the dashboard: server components read from the DB, no fetch to self.
 
-Mutations go through Server Actions in `src/server-actions/`. Every action validates its input with a Zod schema and ends with `revalidatePath()` so the RSC cache reflects the change. The only API routes we keep are the Better Auth catch-all and the dynamic OG image route — both of those genuinely need to be HTTP endpoints.
+Mutations go through Server Actions in `server-actions/`. Every action validates its input with a Zod schema and ends with `revalidatePath()` so the RSC cache reflects the change. The only API routes we keep are the Better Auth catch-all and the dynamic OG image route — both of those genuinely need to be HTTP endpoints.
 
 ### Zod schemas are shared
 
-Each form has a Zod schema in `src/schemas/`, used both as the `zodResolver` for React Hook Form on the client and as the input validator in the corresponding server action. One schema, two uses — no duplicate type definitions.
+Each form has a Zod schema in `schemas/`, used both as the `zodResolver` for React Hook Form on the client and as the input validator in the corresponding server action. One schema, two uses — no duplicate type definitions.
 
 ### Client components stay narrow
 
@@ -70,7 +81,7 @@ Server components are the default. `'use client'` only goes on files that genuin
 
 ### Tanstack Query for anything client-triggered
 
-The `QueryClientProvider` lives in `src/app/providers.tsx` (a small `'use client'` file) and wraps `{children}` inside the root layout. We use it mostly for the AI-assist calls and the broken link checker — anywhere the server action result needs to show loading state and update UI without a full route revalidation.
+The `QueryClientProvider` lives in `app/providers.tsx` (a small `'use client'` file) and wraps `{children}` inside the root layout. We use it mostly for the AI-assist calls and the broken link checker — anywhere the server action result needs to show loading state and update UI without a full route revalidation.
 
 ---
 
@@ -99,7 +110,7 @@ The `QueryClientProvider` lives in `src/app/providers.tsx` (a small `'use client
 
 ## Database
 
-Schema lives in `src/db/schema/`, split one file per table. The Drizzle client is a singleton in `src/db/index.ts`:
+Schema lives in `db/schema/`, split one file per table. The Drizzle client is a singleton in `db/index.ts`:
 
 ```ts
 import { drizzle } from 'drizzle-orm/libsql';
@@ -140,36 +151,40 @@ npx @better-auth/cli generate
 ## Project structure
 
 ```
-src/
-├── app/
-│   ├── layout.tsx              # Root layout, wraps Providers
-│   ├── page.tsx                # Landing
-│   ├── providers.tsx           # 'use client' — QueryClientProvider
-│   ├── (dashboard)/
-│   │   ├── layout.tsx
-│   │   └── dashboard/...
-│   ├── [username]/
-│   │   ├── page.tsx            # Public RSC profile
-│   │   └── not-found.tsx
-│   ├── login/page.tsx
-│   ├── onboarding/page.tsx
-│   └── api/
-│       ├── auth/[...all]/route.ts
-│       └── og/[username]/route.ts
-├── components/
-│   ├── ui/                     # shadcn components
-│   └── ...                     # feature components
-├── db/
-│   ├── index.ts
-│   └── schema/
-├── server-actions/             # 'use server' mutation handlers
-├── schemas/                    # Shared Zod schemas
-├── hooks/                      # Custom hooks
-├── lib/
-│   ├── auth.ts                 # Better Auth config (server)
-│   ├── auth-client.ts          # Better Auth client
-│   └── utils.ts
-└── types/
+app/
+├── layout.tsx                  # Root layout, wraps Providers
+├── page.tsx                    # Landing
+├── providers.tsx               # 'use client' — QueryClientProvider
+├── globals.css                 # Design tokens + shadcn aliases
+├── (dashboard)/
+│   ├── layout.tsx
+│   └── dashboard/...
+├── [username]/
+│   ├── page.tsx                # Public RSC profile
+│   └── not-found.tsx
+├── login/page.tsx
+├── onboarding/page.tsx
+└── api/
+    ├── auth/[...all]/route.ts
+    └── og/[username]/route.ts
+components/
+├── ui/                         # shadcn components
+└── ...                         # feature components (Logo, etc.)
+db/
+├── index.ts
+└── schema/
+server-actions/                 # 'use server' mutation handlers
+schemas/                        # Shared Zod schemas
+hooks/                          # Custom hooks
+lib/
+├── auth.ts                     # Better Auth config (server)
+├── auth-client.ts              # Better Auth client
+└── utils.ts                    # cn() helper
+types/
+docs/
+├── architecture.md
+├── features.md
+└── design_handoff_devfolio/    # Design system spec + preview
 ```
 
 ---
@@ -186,15 +201,15 @@ We stick closely to what the course lectures established. A quick reference for 
 
 **Optimization** — reach for composition (lift content up, move state down) before `useMemo`, `useCallback`, or `React.memo`. Use `forwardRef` when wrapping shadcn primitives that need `asChild`.
 
-**Styling** — Tailwind classes directly on elements, no separate CSS files beyond `globals.css`. shadcn components get copy-pasted into `src/components/ui/` and customized in place. Use semantic HTML and mobile-first breakpoints.
+**Styling** — Tailwind classes directly on elements, no separate CSS files beyond `globals.css`. shadcn components get copy-pasted into `components/ui/` and customized in place. All visual tokens (colors, type scale, spacing, radii) flow through CSS variables defined in `globals.css` — never hardcode hex. Use semantic HTML and mobile-first breakpoints. Full system spec: [`docs/design_handoff_devfolio/README.md`](./docs/design_handoff_devfolio/README.md).
 
 **Async** — `async/await` with `try/catch`, never `.then` chains. Client-side data always goes through Tanstack Query, wrapped in named custom hooks (`useXQuery`, `useCreateXMutation`) with hierarchical query keys.
 
-**Forms** — React Hook Form with `zodResolver`. Every input validated. Schemas live in `src/schemas/` and are reused on the server.
+**Forms** — React Hook Form with `zodResolver`. Every input validated. Schemas live in `schemas/` and are reused on the server.
 
 **Next.js** — App Router, server components by default, `'use client'` pushed as far down the tree as possible. `<Link>` for navigation, `redirect()` from `next/navigation` in server components, `useRouter().push()` only for programmatic client-side navigation. Remember that in Next.js 15+, `params` and `searchParams` are async — `await` them in server components.
 
-**Server Actions** — files marked `'use server'`, input validated with Zod, always end with `revalidatePath()`. Organized by entity in `src/server-actions/`.
+**Server Actions** — files marked `'use server'`, input validated with Zod, always end with `revalidatePath()`. Organized by entity in `server-actions/`.
 
 ---
 

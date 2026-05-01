@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design handoff preview is reference-only HTML/JSX, not built code.
+    "docs/design_handoff_devfolio/**",
   ]),
 ]);
 

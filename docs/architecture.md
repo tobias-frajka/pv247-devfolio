@@ -32,7 +32,7 @@ This matters for two reasons. First, it's faster — one fewer network hop. Seco
 A public profile page looks roughly like this:
 
 ```ts
-// src/app/[username]/page.tsx
+// app/[username]/page.tsx
 import { notFound } from 'next/navigation';
 import { db } from '@/db';
 import { user } from '@/db/schema';
@@ -68,11 +68,11 @@ A few things worth noting. `params` is a Promise in Next.js 15+ — always `awai
 
 ## Writes
 
-Every mutation goes through a Server Action in `src/server-actions/`. The pattern:
+Every mutation goes through a Server Action in `server-actions/`. The pattern:
 
 1. File starts with `'use server'`
 2. Action takes a typed input
-3. Input is parsed through a Zod schema from `src/schemas/`
+3. Input is parsed through a Zod schema from `schemas/`
 4. Session is checked via Better Auth (who is logged in, do they own this resource)
 5. Drizzle performs the write
 6. `revalidatePath()` is called so the next render of the affected page sees the new data
@@ -81,7 +81,7 @@ Every mutation goes through a Server Action in `src/server-actions/`. The patter
 Example shape:
 
 ```ts
-// src/server-actions/projects.ts
+// server-actions/projects.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -141,10 +141,10 @@ We use Tanstack Query for a specific set of cases, not as a general data layer. 
 
 That's mostly the AI-assist features and the broken link checker. The user clicks "Improve description," we call a server action through `useMutation`, show a spinner on the button, and when the response arrives we drop the result into the form field via `setValue`.
 
-`QueryClientProvider` lives in `src/app/providers.tsx`:
+`QueryClientProvider` lives in `app/providers.tsx`:
 
 ```ts
-// src/app/providers.tsx
+// app/providers.tsx
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -156,7 +156,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-And wraps `{children}` inside the root layout. Custom hooks (`useImproveDescriptionMutation`, `useCheckLinksMutation`, etc.) live in `src/hooks/`.
+And wraps `{children}` inside the root layout. Custom hooks (`useImproveDescriptionMutation`, `useCheckLinksMutation`, etc.) live in `hooks/`.
 
 ---
 
@@ -190,10 +190,10 @@ flowchart TD
   F --> G
 ```
 
-Better Auth handles the OAuth dance. The config lives in `src/lib/auth.ts`:
+Better Auth handles the OAuth dance. The config lives in `lib/auth.ts`:
 
 ```ts
-// src/lib/auth.ts
+// lib/auth.ts
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/db';
@@ -221,7 +221,7 @@ export const auth = betterAuth({
 The route handler is a thin catch-all:
 
 ```ts
-// src/app/api/auth/[...all]/route.ts
+// app/api/auth/[...all]/route.ts
 import { toNextJsHandler } from 'better-auth/next-js';
 import { auth } from '@/lib/auth';
 
@@ -231,7 +231,7 @@ export const { GET, POST } = toNextJsHandler(auth.handler);
 For the client side (sign-in buttons, logout), we have a matching `authClient`:
 
 ```ts
-// src/lib/auth-client.ts
+// lib/auth-client.ts
 import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
@@ -278,23 +278,39 @@ No `fetch`, no intermediate API, no manual refetch. The server action is the who
 
 Things that only exist server-side:
 
-- Drizzle client (`src/db/index.ts`)
-- Server action files (`src/server-actions/*`)
-- Better Auth server config (`src/lib/auth.ts`)
+- Drizzle client (`db/index.ts`)
+- Server action files (`server-actions/*`)
+- Better Auth server config (`lib/auth.ts`)
 - OG image route
 - Anthropic SDK calls (only from inside server actions)
 
 Things that can run either side:
 
-- Zod schemas (`src/schemas/*`)
-- Shared types (`src/types/*`)
-- Pure utility functions (`src/lib/utils.ts`)
+- Zod schemas (`schemas/*`)
+- Shared types (`types/*`)
+- Pure utility functions (`lib/utils.ts`)
 
 Things that only run client-side:
 
 - `'use client'` components
-- Tanstack Query hooks (`src/hooks/*`)
-- Better Auth client (`src/lib/auth-client.ts`)
+- Tanstack Query hooks (`hooks/*`)
+- Better Auth client (`lib/auth-client.ts`)
 - Anything using the `window` object
 
 Rule of thumb: if you need the secret, it goes server-only. The `ANTHROPIC_API_KEY`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_SECRET`, and `AUTH_TOKEN` never touch a client bundle — they're read from `process.env` inside server-only code.
+
+---
+
+## Styling & design system
+
+The visual layer is governed by [`docs/design_handoff_devfolio/`](./design_handoff_devfolio/). That folder is the source of truth — tokens, component inventory, layout patterns, voice rules, and an interactive HTML preview at `preview/design-system.html`.
+
+`app/globals.css` is the production token sheet, copied verbatim from the handoff. It exposes:
+
+- **DevFolio raw tokens** — `--paper`, `--paper-2`, `--paper-3`, `--ink`, `--ink-2`, `--ink-3`, `--hairline`, `--accent`, `--danger`, `--warn`; spacing on a 4pt grid; the type scale `--t-xs … --t-5xl`; radii `--radius-xs … --radius-xl`.
+- **shadcn aliases** — `--background`, `--foreground`, `--card`, `--primary`, `--border`, `--ring`, etc., mapped onto the raw tokens. Every shadcn primitive picks the look up automatically; we don't customize their internals.
+- **Tailwind v4 `@theme inline` bridge** — exposes the same variables as utilities (`bg-card`, `text-muted-foreground`, `font-mono`, `rounded-md`, etc.).
+
+Themes are scoped via `[data-theme="dark"]` (default) and `[data-theme="light"]` on `<html>`. Switching is a single attribute swap — no re-render, no flash. Fonts are Geist + Geist Mono via `next/font/google`; the variables `--font-geist-sans` / `--font-geist-mono` are wired into `--font-sans` / `--font-mono` in `globals.css`.
+
+Practical rule: never hardcode hex. Either use a Tailwind utility (`bg-background`, `text-muted-foreground`) or reference the raw token (`text-[var(--ink-3)]`, `bg-[var(--paper-2)]`) when no alias fits.

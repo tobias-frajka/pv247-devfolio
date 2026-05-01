@@ -1,7 +1,16 @@
 /* DevFolio — globals.css
- * DevFolio raw tokens + shadcn/ui aliases + Tailwind v4 @theme bridge.
- * Dark theme is the default. Light theme is included for free; switch via
- * `<html data-theme="light">`.
+ * Drop-in replacement for app/globals.css. Maps DevFolio tokens to the
+ * shadcn/ui CSS variable convention so every shadcn primitive (Button,
+ * Input, Card, Dialog, Switch, Progress, Badge…) inherits the look
+ * automatically.
+ *
+ * Usage:
+ *   1) Replace the contents of `src/app/globals.css` with this file.
+ *   2) In `app/layout.tsx`, add `data-theme="dark"` (or "light") to <html>.
+ *   3) Load Geist via next/font (already present in the bare scaffold):
+ *        import { GeistSans } from 'geist/font/sans';
+ *        import { GeistMono } from 'geist/font/mono';
+ *      and apply `${GeistSans.variable} ${GeistMono.variable}` to <html>.
  */
 
 @import "tailwindcss";
@@ -35,21 +44,19 @@
   --paper:         oklch(0.165 0.008 80);
   --paper-2:       oklch(0.205 0.008 80);
   --paper-3:       oklch(0.245 0.008 80);
-  --ink:           oklch(0.952 0.013 89);
-  --ink-2:         oklch(0.78  0.012 85);
-  --ink-3:         oklch(0.58  0.010 85);
+  --ink:           oklch(0.97  0.005 90);
+  --ink-2:         oklch(0.78  0.006 85);
+  --ink-3:         oklch(0.58  0.006 85);
   --hairline:      oklch(0.32  0.006 80);
   --hairline-soft: oklch(0.26  0.006 80);
 
-  /* DevFolio brand accent (green). Named --brand to keep it separate from
-     shadcn's --accent, which is the subtle hover surface. */
-  --brand:        oklch(0.78 var(--accent-c) var(--accent-h));
-  --brand-fg:     oklch(0.18 0.02 var(--accent-h));
-  --brand-ghost:  oklch(0.78 var(--accent-c) var(--accent-h) / 0.12);
+  --accent:        oklch(0.78 var(--accent-c) var(--accent-h));
+  --accent-fg:     oklch(0.18 0.02 var(--accent-h));
+  --accent-ghost:  oklch(0.78 var(--accent-c) var(--accent-h) / 0.12);
 
   --danger: oklch(0.7  0.16 25);
   --warn:   oklch(0.78 0.13 75);
-  --ok:     var(--brand);
+  --ok:     var(--accent);
 
   /* shadcn/ui mapping (these are what Button / Input / Card etc. consume) */
   --background: var(--paper);
@@ -61,8 +68,8 @@
   --popover: var(--paper-2);
   --popover-foreground: var(--ink);
 
-  --primary: var(--brand);
-  --primary-foreground: var(--brand-fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-fg);
 
   --secondary: var(--paper-3);
   --secondary-foreground: var(--ink);
@@ -78,7 +85,7 @@
 
   --border: var(--hairline);
   --input: var(--hairline);
-  --ring: var(--brand);
+  --ring: oklch(0.78 var(--accent-c) var(--accent-h));
 
   --radius: 0.625rem;
 }
@@ -94,13 +101,11 @@
   --hairline:      oklch(0.86  0.006 90);
   --hairline-soft: oklch(0.92  0.005 90);
 
-  --brand:        oklch(0.55 var(--accent-c) var(--accent-h));
-  --brand-fg:     oklch(0.99 0.005 90);
-  --brand-ghost:  oklch(0.55 var(--accent-c) var(--accent-h) / 0.10);
+  --accent-fg:     oklch(0.99 0.005 90);
+  --accent-ghost:  oklch(0.55 var(--accent-c) var(--accent-h) / 0.10);
 
   --danger: oklch(0.55 0.18 25);
   --warn:   oklch(0.62 0.13 75);
-  --ok:     var(--brand);
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -108,8 +113,8 @@
   --card-foreground: var(--ink);
   --popover: var(--paper-2);
   --popover-foreground: var(--ink);
-  --primary: var(--brand);
-  --primary-foreground: var(--brand-fg);
+  --primary: oklch(0.55 var(--accent-c) var(--accent-h));
+  --primary-foreground: var(--accent-fg);
   --secondary: var(--paper-3);
   --secondary-foreground: var(--ink);
   --muted: var(--paper-2);
@@ -117,10 +122,10 @@
   --accent: var(--paper-3);
   --accent-foreground: var(--ink);
   --destructive: var(--danger);
-  --destructive-foreground: var(--brand-fg);
+  --destructive-foreground: var(--accent-fg);
   --border: var(--hairline);
   --input: var(--hairline);
-  --ring: var(--brand);
+  --ring: oklch(0.55 var(--accent-c) var(--accent-h));
 }
 
 /* ---------- Tailwind v4 @theme bridge ---------- */
@@ -167,7 +172,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "ss01", "cv11";
 }
-::selection { background: var(--brand-ghost); color: var(--foreground); }
+::selection { background: var(--accent-ghost); color: var(--foreground); }
 
 /* ---------- Utility classes used across the app ---------- */
 .font-mono { font-family: var(--font-mono); font-feature-settings: "zero","ss01"; }

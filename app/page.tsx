@@ -1,65 +1,114 @@
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Logo } from "@/components/logo";
 
-export default function Home() {
+const features = [
+  {
+    eyebrow: "01 — Editor",
+    title: "Forms, not WYSIWYG",
+    body: "Five sections. One field at a time. Validation that tells you exactly what's wrong.",
+  },
+  {
+    eyebrow: "02 — AI assist",
+    title: "Drafts, not autopilot",
+    body: "Bio generator, description polisher, title suggestions — every output is editable before it lands.",
+  },
+  {
+    eyebrow: "03 — Public page",
+    title: "Server-rendered & fast",
+    body: "Real metadata. Real OG image. Loads in <200ms. Shareable on the day you sign up.",
+  },
+] as const;
+
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex flex-1 flex-col bg-background">
+      <div className="mx-auto w-full max-w-[1100px] px-10 pt-8 pb-20">
+        <nav className="mb-16 flex items-center justify-between">
+          <Logo size={28} />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#">Examples</a>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#">Docs</a>
+            </Button>
+            <Button variant="secondary" size="sm" asChild>
+              <a href="/login">Sign in</a>
+            </Button>
+          </div>
+        </nav>
+
+        <section className="mx-auto max-w-[760px] pb-14 text-center">
+          <div className="eyebrow mb-4">· now in beta · v0.4</div>
+          <h1
+            className="m-0 font-medium leading-[1.02] tracking-[-0.03em]"
+            style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)" }}
+          >
+            A portfolio for developers,
+            <br />
+            not for designers.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p
+            className="mt-5 leading-[1.5]"
+            style={{ fontSize: "var(--t-lg)", color: "var(--ink-2)" }}
+          >
+            Sign in with GitHub. Fill out your projects, skills, and experience.
+            Get a clean public page at{" "}
+            <span className="font-mono text-foreground">
+              devfolio.app/
+              <span style={{ color: "var(--primary)" }}>you</span>
+            </span>
+            . No CSS. No hosting. No Friday-night templates.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <div className="mt-7 flex justify-center gap-2.5">
+            <Button size="lg" asChild>
+              <a href="/login">Sign in with GitHub →</a>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <a href="#">See an example</a>
+            </Button>
+          </div>
+          <div
+            className="mt-7 flex justify-center gap-6 font-mono"
+            style={{ fontSize: "var(--t-xs)", color: "var(--ink-3)" }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <span>· no credit card</span>
+            <span>· export anytime</span>
+            <span>· open source</span>
+          </div>
+        </section>
+
+        <section className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-3">
+          {features.map((f) => (
+            <Card
+              key={f.eyebrow}
+              className="gap-3 rounded-[14px] border-[var(--hairline)] bg-[var(--paper-2)] px-5 py-5"
+            >
+              <div className="eyebrow">{f.eyebrow}</div>
+              <div
+                className="font-medium tracking-[-0.01em]"
+                style={{ fontSize: "var(--t-lg)" }}
+              >
+                {f.title}
+              </div>
+              <p
+                className="m-0"
+                style={{ fontSize: "var(--t-sm)", color: "var(--ink-2)" }}
+              >
+                {f.body}
+              </p>
+            </Card>
+          ))}
+        </section>
+
+        <footer
+          className="mt-16 text-center font-mono"
+          style={{ fontSize: "var(--t-xs)", color: "var(--ink-3)" }}
+        >
+          built with next.js · drizzle · turso · anthropic · for pv247 @ fi muni
+        </footer>
+      </div>
     </div>
   );
 }
