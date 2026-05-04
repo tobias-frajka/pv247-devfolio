@@ -4,7 +4,7 @@
  * `<html data-theme="light">`.
  */
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ---------- DevFolio raw tokens (kept side-by-side with shadcn aliases) ---------- */
 :root {
@@ -14,42 +14,58 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
 
-  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
-  --space-5: 20px;  --space-6: 24px;  --space-8: 32px;  --space-10: 40px;
-  --space-12: 48px; --space-16: 64px; --space-20: 80px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "JetBrains Mono", monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'JetBrains Mono', monospace;
 
-  --t-xs: 0.75rem;  --t-sm: 0.8125rem; --t-base: 0.9375rem; --t-md: 1rem;
-  --t-lg: 1.125rem; --t-xl: 1.375rem;  --t-2xl: 1.75rem;    --t-3xl: 2.25rem;
-  --t-4xl: 3rem;    --t-5xl: 4rem;
+  --t-xs: 0.75rem;
+  --t-sm: 0.8125rem;
+  --t-base: 0.9375rem;
+  --t-md: 1rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.375rem;
+  --t-2xl: 1.75rem;
+  --t-3xl: 2.25rem;
+  --t-4xl: 3rem;
+  --t-5xl: 4rem;
 
   --accent-h: 145;
   --accent-c: 0.12;
 }
 
 /* ---------- DARK (primary) ---------- */
-:root, [data-theme="dark"] {
+:root,
+[data-theme='dark'] {
   /* DevFolio palette */
-  --paper:         oklch(0.165 0.008 80);
-  --paper-2:       oklch(0.205 0.008 80);
-  --paper-3:       oklch(0.245 0.008 80);
-  --ink:           oklch(0.952 0.013 89);
-  --ink-2:         oklch(0.78  0.012 85);
-  --ink-3:         oklch(0.58  0.010 85);
-  --hairline:      oklch(0.32  0.006 80);
-  --hairline-soft: oklch(0.26  0.006 80);
+  --paper: oklch(0.165 0.008 80);
+  --paper-2: oklch(0.205 0.008 80);
+  --paper-3: oklch(0.245 0.008 80);
+  --ink: oklch(0.952 0.013 89);
+  --ink-2: oklch(0.78 0.012 85);
+  --ink-3: oklch(0.58 0.01 85);
+  --hairline: oklch(0.32 0.006 80);
+  --hairline-soft: oklch(0.26 0.006 80);
 
   /* DevFolio brand accent (green). Named --brand to keep it separate from
      shadcn's --accent, which is the subtle hover surface. */
-  --brand:        oklch(0.78 var(--accent-c) var(--accent-h));
-  --brand-fg:     oklch(0.18 0.02 var(--accent-h));
-  --brand-ghost:  oklch(0.78 var(--accent-c) var(--accent-h) / 0.12);
+  --brand: oklch(0.78 var(--accent-c) var(--accent-h));
+  --brand-fg: oklch(0.18 0.02 var(--accent-h));
+  --brand-ghost: oklch(0.78 var(--accent-c) var(--accent-h) / 0.12);
 
-  --danger: oklch(0.7  0.16 25);
-  --warn:   oklch(0.78 0.13 75);
-  --ok:     var(--brand);
+  --danger: oklch(0.7 0.16 25);
+  --warn: oklch(0.78 0.13 75);
+  --ok: var(--brand);
 
   /* shadcn/ui mapping (these are what Button / Input / Card etc. consume) */
   --background: var(--paper);
@@ -70,7 +86,7 @@
   --muted: var(--paper-2);
   --muted-foreground: var(--ink-2);
 
-  --accent: var(--paper-3);              /* shadcn's "accent" = subtle hover, not brand */
+  --accent: var(--paper-3); /* shadcn's "accent" = subtle hover, not brand */
   --accent-foreground: var(--ink);
 
   --destructive: var(--danger);
@@ -84,23 +100,23 @@
 }
 
 /* ---------- LIGHT ---------- */
-[data-theme="light"] {
-  --paper:         oklch(0.985 0.004 90);
-  --paper-2:       oklch(0.97  0.005 90);
-  --paper-3:       oklch(0.94  0.006 90);
-  --ink:           oklch(0.18  0.008 80);
-  --ink-2:         oklch(0.42  0.008 80);
-  --ink-3:         oklch(0.62  0.008 80);
-  --hairline:      oklch(0.86  0.006 90);
-  --hairline-soft: oklch(0.92  0.005 90);
+[data-theme='light'] {
+  --paper: oklch(0.985 0.004 90);
+  --paper-2: oklch(0.97 0.005 90);
+  --paper-3: oklch(0.94 0.006 90);
+  --ink: oklch(0.18 0.008 80);
+  --ink-2: oklch(0.42 0.008 80);
+  --ink-3: oklch(0.62 0.008 80);
+  --hairline: oklch(0.86 0.006 90);
+  --hairline-soft: oklch(0.92 0.005 90);
 
-  --brand:        oklch(0.55 var(--accent-c) var(--accent-h));
-  --brand-fg:     oklch(0.99 0.005 90);
-  --brand-ghost:  oklch(0.55 var(--accent-c) var(--accent-h) / 0.10);
+  --brand: oklch(0.55 var(--accent-c) var(--accent-h));
+  --brand-fg: oklch(0.99 0.005 90);
+  --brand-ghost: oklch(0.55 var(--accent-c) var(--accent-h) / 0.1);
 
   --danger: oklch(0.55 0.18 25);
-  --warn:   oklch(0.62 0.13 75);
-  --ok:     var(--brand);
+  --warn: oklch(0.62 0.13 75);
+  --ok: var(--brand);
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -155,8 +171,14 @@
 }
 
 /* ---------- Base ---------- */
-* { border-color: var(--border); }
-html, body { margin: 0; padding: 0; }
+* {
+  border-color: var(--border);
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
 body {
   background: var(--background);
   color: var(--foreground);
@@ -165,12 +187,18 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "ss01", "cv11";
+  font-feature-settings: 'ss01', 'cv11';
 }
-::selection { background: var(--brand-ghost); color: var(--foreground); }
+::selection {
+  background: var(--brand-ghost);
+  color: var(--foreground);
+}
 
 /* ---------- Utility classes used across the app ---------- */
-.font-mono { font-family: var(--font-mono); font-feature-settings: "zero","ss01"; }
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'zero', 'ss01';
+}
 
 .kbd {
   font-family: var(--font-mono);

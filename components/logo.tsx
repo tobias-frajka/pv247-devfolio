@@ -11,18 +11,18 @@ export function Logo({ size = 28 }: LogoProps) {
       style={{ fontSize: size * 0.65 }}
     >
       <span
-        className="relative grid place-items-center rounded-lg bg-foreground font-mono font-semibold text-background"
+        className="bg-foreground text-background relative grid place-items-center rounded-lg font-mono font-semibold"
         style={{ width: size, height: size, fontSize: size * 0.5 }}
       >
-        {"{ }"}
+        {'{ }'}
         <span
           aria-hidden
-          className="absolute rounded-full border-2 border-background bg-primary"
+          className="border-background bg-primary absolute rounded-full border-2"
           style={{
             width: dotSize,
             height: dotSize,
             right: -3,
-            bottom: -3,
+            bottom: -3
           }}
         />
       </span>

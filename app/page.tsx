@@ -1,28 +1,28 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Logo } from "@/components/logo";
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Logo } from '@/components/logo';
 
 const features = [
   {
-    eyebrow: "01 — Editor",
-    title: "Forms, not WYSIWYG",
-    body: "Five sections. One field at a time. Validation that tells you exactly what's wrong.",
+    eyebrow: '01 — Editor',
+    title: 'Forms, not WYSIWYG',
+    body: "Five sections. One field at a time. Validation that tells you exactly what's wrong."
   },
   {
-    eyebrow: "02 — AI assist",
-    title: "Drafts, not autopilot",
-    body: "Bio generator, description polisher, title suggestions — every output is editable before it lands.",
+    eyebrow: '02 — AI assist',
+    title: 'Drafts, not autopilot',
+    body: 'Bio generator, description polisher, title suggestions — every output is editable before it lands.'
   },
   {
-    eyebrow: "03 — Public page",
-    title: "Server-rendered & fast",
-    body: "Real metadata. Real OG image. Loads in <200ms. Shareable on the day you sign up.",
-  },
+    eyebrow: '03 — Public page',
+    title: 'Server-rendered & fast',
+    body: 'Real metadata. Real OG image. Loads in <200ms. Shareable on the day you sign up.'
+  }
 ] as const;
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-1 flex-col bg-background">
+    <div className="bg-background flex flex-1 flex-col">
       <div className="mx-auto w-full max-w-[1100px] px-10 pt-8 pb-20">
         <nav className="mb-16 flex items-center justify-between">
           <Logo size={28} />
@@ -42,8 +42,8 @@ export default function LandingPage() {
         <section className="mx-auto max-w-[760px] pb-14 text-center">
           <div className="eyebrow mb-4">· now in beta · v0.4</div>
           <h1
-            className="m-0 font-medium leading-[1.02] tracking-[-0.03em]"
-            style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)" }}
+            className="m-0 leading-[1.02] font-medium tracking-[-0.03em]"
+            style={{ fontSize: 'clamp(2.4rem, 5vw, 4rem)' }}
           >
             A portfolio for developers,
             <br />
@@ -51,13 +51,13 @@ export default function LandingPage() {
           </h1>
           <p
             className="mt-5 leading-[1.5]"
-            style={{ fontSize: "var(--t-lg)", color: "var(--ink-2)" }}
+            style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}
           >
-            Sign in with GitHub. Fill out your projects, skills, and experience.
-            Get a clean public page at{" "}
-            <span className="font-mono text-foreground">
+            Sign in with GitHub. Fill out your projects, skills, and experience. Get a clean public
+            page at{' '}
+            <span className="text-foreground font-mono">
               devfolio.app/
-              <span style={{ color: "var(--primary)" }}>you</span>
+              <span style={{ color: 'var(--primary)' }}>you</span>
             </span>
             . No CSS. No hosting. No Friday-night templates.
           </p>
@@ -71,7 +71,7 @@ export default function LandingPage() {
           </div>
           <div
             className="mt-7 flex justify-center gap-6 font-mono"
-            style={{ fontSize: "var(--t-xs)", color: "var(--ink-3)" }}
+            style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
           >
             <span>· no credit card</span>
             <span>· export anytime</span>
@@ -80,22 +80,16 @@ export default function LandingPage() {
         </section>
 
         <section className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {features.map((f) => (
+          {features.map(f => (
             <Card
               key={f.eyebrow}
               className="gap-3 rounded-[14px] border-[var(--hairline)] bg-[var(--paper-2)] px-5 py-5"
             >
               <div className="eyebrow">{f.eyebrow}</div>
-              <div
-                className="font-medium tracking-[-0.01em]"
-                style={{ fontSize: "var(--t-lg)" }}
-              >
+              <div className="font-medium tracking-[-0.01em]" style={{ fontSize: 'var(--t-lg)' }}>
                 {f.title}
               </div>
-              <p
-                className="m-0"
-                style={{ fontSize: "var(--t-sm)", color: "var(--ink-2)" }}
-              >
+              <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
                 {f.body}
               </p>
             </Card>
@@ -104,7 +98,7 @@ export default function LandingPage() {
 
         <footer
           className="mt-16 text-center font-mono"
-          style={{ fontSize: "var(--t-xs)", color: "var(--ink-3)" }}
+          style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
         >
           built with next.js · drizzle · turso · anthropic · for pv247 @ fi muni
         </footer>
