@@ -1,0 +1,12 @@
+node_modules
+.next
+.vercel
+build
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+pnpm-lock.yaml
+docs/design_handoff_devfolio
+*.db*
+drizzle

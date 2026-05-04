@@ -32,6 +32,16 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local turso dev db
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# drizzle migrations (we use push, not files — keep folder out of repo)
+/drizzle
 
 # vercel
 .vercel
