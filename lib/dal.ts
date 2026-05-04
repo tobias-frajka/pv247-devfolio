@@ -6,8 +6,17 @@ import { cache } from 'react';
 
 import { auth, type Session } from '@/lib/auth';
 
+// Better Auth throws FAILED_TO_GET_SESSION on any internal error (DB outage,
+// libsql I/O hiccup, etc.) — including the case where its own findSession query
+// errors. We don't want a transient backend issue to render a 500; treating it
+// as "no session" sends the user to /login, which is the right fallback.
 export const getSession = cache(async (): Promise<Session | null> => {
-  return auth.api.getSession({ headers: await headers() });
+  try {
+    return await auth.api.getSession({ headers: await headers() });
+  } catch (err) {
+    console.error('[dal] auth.api.getSession failed; treating as unauthenticated', err);
+    return null;
+  }
 });
 
 export const requireSession = cache(async (): Promise<Session> => {
