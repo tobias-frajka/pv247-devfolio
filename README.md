@@ -24,20 +24,20 @@ The editor has a few extras that make filling out a portfolio less tedious:
 
 ## Stack
 
-| | |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
-| Components | shadcn/ui |
-| Auth | Better Auth (GitHub OAuth) |
-| Database | Turso (hosted SQLite) |
-| ORM | Drizzle |
-| Client data | Tanstack Query |
-| Forms | React Hook Form |
-| Validation | Zod |
-| AI | Anthropic API |
-| Hosting | Vercel |
+|             |                                                 |
+| ----------- | ----------------------------------------------- |
+| Framework   | Next.js 16 (App Router)                         |
+| Language    | TypeScript                                      |
+| Styling     | Tailwind CSS                                    |
+| Components  | shadcn/ui                                       |
+| Auth        | Better Auth (GitHub OAuth)                      |
+| Database    | Turso (hosted SQLite)                           |
+| ORM         | Drizzle                                         |
+| Client data | Tanstack Query                                  |
+| Forms       | React Hook Form                                 |
+| Validation  | Zod                                             |
+| AI          | OpenRouter (free models, OpenAI-compatible API) |
+| Hosting     | Vercel                                          |
 
 ---
 
@@ -57,6 +57,7 @@ Deeper references live in the [`docs/`](./docs) folder:
 
 - [`docs/architecture.md`](./docs/architecture.md) — data flow, rendering model, caching, auth flow, end-to-end request lifecycles
 - [`docs/features.md`](./docs/features.md) — per-feature specs, AI prompts, completeness score formula, broken link checker behavior
+- [`docs/backend-plan.md`](./docs/backend-plan.md) — backend implementation plan: schema, Better Auth, DAL + `proxy.ts`, server actions, OpenRouter wiring, build order
 - [`docs/design_handoff_devfolio/`](./docs/design_handoff_devfolio) — design system handoff: tokens, components, mockups
 
 The rest of this file is the short version.
@@ -69,7 +70,7 @@ The rest of this file is the short version.
 
 The public profile page (`/[username]`) is a React Server Component that queries Drizzle directly. There's no `/api/profile/:username` endpoint — that would just be calling our own server from our own server. Same applies inside the dashboard: server components read from the DB, no fetch to self.
 
-Mutations go through Server Actions in `server-actions/`. Every action validates its input with a Zod schema and ends with `revalidatePath()` so the RSC cache reflects the change. The only API routes we keep are the Better Auth catch-all and the dynamic OG image route — both of those genuinely need to be HTTP endpoints.
+Mutations go through Server Actions in `server-actions/`. Every action validates its input with a Zod schema, re-checks the session through the Data Access Layer (`lib/dal.ts`), and ends with `revalidatePath()` so the RSC cache reflects the change. The only API routes we keep are the Better Auth catch-all and the dynamic OG image route — both of those genuinely need to be HTTP endpoints. Optimistic auth gating lives in `proxy.ts` (Next.js 16's renamed `middleware.ts`); real authorization happens in the DAL.
 
 ### Zod schemas are shared
 
@@ -115,16 +116,19 @@ Schema lives in `db/schema/`, split one file per table. The Drizzle client is a 
 ```ts
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
+import * as schema from './schema';
 
 const client = createClient({
   url: process.env.DATABASE_URL!,
-  authToken: process.env.AUTH_TOKEN
+  authToken: process.env.DATABASE_AUTH_TOKEN
 });
 
-export const db = drizzle(client);
+export const db = drizzle(client, { schema });
 ```
 
 Our domain tables are `profiles`, `projects`, `skills`, `experience`, and `socials`. Better Auth manages its own schema (users, sessions, accounts, verifications) — we generate it once with the Better Auth CLI and commit it alongside our own tables. Everything non-auth has a `userId` foreign key with `onDelete: 'cascade'`. Projects store their tech stack as a JSON column.
+
+The custom `username` column on `user` is added via Better Auth's official `username` plugin, with a Drizzle `uniqueIndex` defined alongside our own schema files — `additionalFields` alone does not enforce DB uniqueness.
 
 For local dev, Turso can run a local SQLite file via its CLI:
 
@@ -140,17 +144,14 @@ Migrations are handled by drizzle-kit. After changing a schema file, run:
 npx drizzle-kit push
 ```
 
-When the Better Auth config changes (new providers, new plugins), regenerate its schema with:
-
-```bash
-npx @better-auth/cli generate
-```
+When the Better Auth config changes (new providers, new plugins), update `db/schema/auth.ts` by hand to match — the canonical schema lives in `node_modules/@better-auth/core/dist/db/get-tables.mjs` and each plugin's `schema.mjs`. We avoid `@better-auth/cli` because its current stable lags behind `better-auth` itself and breaks on `generate` (see [docs/backend-plan.md](./docs/backend-plan.md) for the workaround rationale).
 
 ---
 
 ## Project structure
 
 ```
+proxy.ts                        # Optimistic auth gating (Next.js 16 — formerly middleware.ts)
 app/
 ├── layout.tsx                  # Root layout, wraps Providers
 ├── page.tsx                    # Landing
@@ -172,18 +173,20 @@ components/
 └── ...                         # feature components (Logo, etc.)
 db/
 ├── index.ts
-└── schema/
+└── schema/                     # one file per table + relations.ts + auth.ts (generated)
 server-actions/                 # 'use server' mutation handlers
 schemas/                        # Shared Zod schemas
 hooks/                          # Custom hooks
 lib/
 ├── auth.ts                     # Better Auth config (server)
 ├── auth-client.ts              # Better Auth client
+├── dal.ts                      # Data Access Layer — session/ownership helpers ('server-only')
 └── utils.ts                    # cn() helper
 types/
 docs/
 ├── architecture.md
 ├── features.md
+├── backend-plan.md             # Backend implementation plan
 └── design_handoff_devfolio/    # Design system spec + preview
 ```
 
@@ -207,53 +210,111 @@ We stick closely to what the course lectures established. A quick reference for 
 
 **Forms** — React Hook Form with `zodResolver`. Every input validated. Schemas live in `schemas/` and are reused on the server.
 
-**Next.js** — App Router, server components by default, `'use client'` pushed as far down the tree as possible. `<Link>` for navigation, `redirect()` from `next/navigation` in server components, `useRouter().push()` only for programmatic client-side navigation. Remember that in Next.js 15+, `params` and `searchParams` are async — `await` them in server components.
+**Next.js** — App Router, server components by default, `'use client'` pushed as far down the tree as possible. `<Link>` for navigation, `redirect()` from `next/navigation` in server components, `useRouter().push()` only for programmatic client-side navigation. Remember that in Next.js 15+, `params`, `searchParams`, `cookies()`, and `headers()` are all async — `await` them in server components, server actions, and route handlers. In v16, `middleware.ts` is renamed to `proxy.ts`, runs on Node by default, and the `runtime` option throws if set. `GET` route handlers are dynamic by default in v16.
 
-**Server Actions** — files marked `'use server'`, input validated with Zod, always end with `revalidatePath()`. Organized by entity in `server-actions/`.
+**Server Actions** — files marked `'use server'`, input validated with Zod, session re-checked through `lib/dal.ts` (Next.js 16 explicitly recommends a Data Access Layer over relying on `proxy.ts`), and always end with `revalidatePath()`. Organized by entity in `server-actions/`.
 
 ---
 
 ## Getting started
 
-Clone the repo, install dependencies, and set up the environment file:
+### Prerequisites
+
+- **Node.js 20.6+** — required by Next.js 16
+- **pnpm 10+** — `npm i -g pnpm` if you don't have it
+- **Turso CLI** — for the local libSQL database
+  - macOS / Linux / WSL: `curl -sSfL https://get.tur.so/install.sh | bash`
+  - Windows: install in WSL (above) — see WSL note below
+
+### 1. Install dependencies
 
 ```bash
 pnpm install
-cp .env.example .env.local
 ```
 
-You'll need:
+### 2. Local database
 
-```
-DATABASE_URL=http://localhost:8080
-AUTH_TOKEN=                   # only needed against hosted Turso
-BETTER_AUTH_SECRET=           # openssl rand -base64 32
-BETTER_AUTH_URL=http://localhost:3000
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-ANTHROPIC_API_KEY=
-```
-
-Start the local database in one terminal:
+In a dedicated terminal (WSL on Windows; otherwise the regular shell):
 
 ```bash
 turso dev --db-file dev.db
 ```
 
-Generate the Better Auth schema (first time only, or after config changes), then push the combined schema to the DB:
+Leave it running. It serves an offline libSQL server on `127.0.0.1:8080` backed by a `dev.db` file in the project root.
+
+### 3. Environment
+
+Copy the template and fill in the secrets:
 
 ```bash
-npx @better-auth/cli generate
-npx drizzle-kit push
+cp .env.example .env.local        # macOS / Linux / WSL
+copy .env.example .env.local      # Windows PowerShell
 ```
 
-Then run the app:
+`.env.local` (gitignored):
+
+```
+# leave DATABASE_URL on 127.0.0.1 — Node's fetch resolves "localhost" to ::1 first,
+# turso dev only binds IPv4, and you'll get ECONNREFUSED with localhost.
+DATABASE_URL=http://127.0.0.1:8080
+DATABASE_AUTH_TOKEN=
+
+BETTER_AUTH_SECRET=                                   # openssl rand -base64 32
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1:free     # any free model on openrouter.ai/models
+```
+
+**GitHub OAuth app** — register at <https://github.com/settings/developers> → **New OAuth App**:
+
+- Homepage URL: `http://localhost:3000`
+- Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+
+Copy the Client ID and a freshly generated Client Secret into `.env.local`.
+
+**OpenRouter** — sign up at <https://openrouter.ai>, generate a key under the dashboard. Free models live at <https://openrouter.ai/models?max_price=0>; the default works without paid credits.
+
+### 4. Push the schema
+
+```bash
+pnpm db:push
+```
+
+Drizzle Kit reads `.env.local`, connects to turso dev via libSQL, and creates every table.
+
+### 5. Run the app
 
 ```bash
 pnpm dev
 ```
 
-For the GitHub OAuth app, register one at github.com/settings/developers with the callback URL `http://localhost:3000/api/auth/callback/github`.
+Open <http://localhost:3000>. Click **Sign in**, complete the GitHub OAuth flow, pick a username, and you'll land on `/dashboard/profile`.
+
+### Useful scripts
+
+- `pnpm dev` — Next.js dev server
+- `pnpm build` / `pnpm start` — production build + run
+- `pnpm typecheck` — `tsc --noEmit`
+- `pnpm lint` / `pnpm lint:fix` — ESLint
+- `pnpm format` / `pnpm format:check` — Prettier
+- `pnpm db:push` — sync `db/schema/` to the local DB (run after any schema change)
+- `pnpm db:studio` — Drizzle Studio (web UI for inspecting + editing rows)
+
+### Editor + commit hooks
+
+Prettier + ESLint are wired up two ways:
+
+- **On save (VS Code)** — install the recommended extensions when prompted (`.vscode/extensions.json`); `.vscode/settings.json` enables format-on-save and ESLint auto-fix.
+- **On commit (any editor)** — Husky runs `lint-staged` in a `pre-commit` hook. Staged `.ts`/`.tsx` files are auto-formatted and lint-fixed; the commit aborts if anything fails. Set up automatically by `pnpm install` (via the `prepare` script). Other editors (WebStorm, etc.) can use `.editorconfig` for indent/quote hints.
+
+### Windows + WSL note
+
+The recommended setup is to **run pnpm scripts from Windows** (PowerShell) and **`turso dev` from WSL**. WSL2 forwards the port automatically, but `node_modules` contains platform-native binaries (esbuild, libsql) — installing in one environment then running in the other will fail with platform-mismatch errors. Pick one side for `pnpm install`, stick with it.
 
 ---
 

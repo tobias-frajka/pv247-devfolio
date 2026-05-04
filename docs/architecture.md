@@ -72,8 +72,8 @@ Every mutation goes through a Server Action in `server-actions/`. The pattern:
 
 1. File starts with `'use server'`
 2. Action takes a typed input
-3. Input is parsed through a Zod schema from `schemas/`
-4. Session is checked via Better Auth (who is logged in, do they own this resource)
+3. Session and ownership are verified via the Data Access Layer (`lib/dal.ts`) — see [Auth gating](#auth-gating)
+4. Input is parsed through a Zod schema from `schemas/`
 5. Drizzle performs the write
 6. `revalidatePath()` is called so the next render of the affected page sees the new data
 7. Action returns either the new data or a typed error
@@ -85,29 +85,23 @@ Example shape:
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
 import { db } from '@/db';
-import { projects } from '@/db/schema';
+import { project } from '@/db/schema';
 import { projectSchema } from '@/schemas/project';
+import { requireUsername } from '@/lib/dal';
 
 export async function createProject(input: unknown) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error('Unauthorized');
-
+  const session = await requireUsername();
   const data = projectSchema.parse(input);
 
-  const [project] = await db
-    .insert(projects)
+  const [row] = await db
+    .insert(project)
     .values({ ...data, userId: session.user.id })
     .returning();
 
   revalidatePath('/dashboard/projects');
-  if (session.user.username) {
-    revalidatePath(`/${session.user.username}`);
-  }
-
-  return project;
+  revalidatePath(`/${session.user.username}`);
+  return row;
 }
 ```
 
@@ -164,17 +158,27 @@ And wraps `{children}` inside the root layout. Custom hooks (`useImproveDescript
 
 Next.js has several caching layers and they interact in ways that bite. A quick summary of what matters for us:
 
-**Request memoization** — `fetch` and functions wrapped in `cache()` are deduplicated within a single render. If the profile page and a component inside it both query the same user, Drizzle runs once. We don't need to do anything special for this to work.
+**Request memoization** — `fetch` and functions wrapped in `cache()` are deduplicated within a single render. If the profile page and a component inside it both query the same user, Drizzle runs once. The DAL helpers in `lib/dal.ts` are wrapped in `cache()` so multiple calls to `requireSession()` in one render hit Better Auth once.
 
 **Data cache** — caches the results of `fetch` calls across requests. We don't use `fetch` for our own data (we use Drizzle), so this mostly doesn't apply. It would apply if we started hitting an external API.
 
-**Full route cache** — server-rendered HTML and RSC payload cached on the server. Note that Next.js 15 changed the defaults: fetches and GET route handlers are no longer cached by default. Pages are still eligible for static rendering if they don't use dynamic APIs (cookies, headers, searchParams) — the public profile page uses the username param, so it's dynamic.
+**Full route cache** — server-rendered HTML and RSC payload cached on the server. Note that Next.js 15+ changed the defaults: fetches and `GET` route handlers are no longer cached by default. Pages are still eligible for static rendering if they don't use dynamic APIs (cookies, headers, searchParams) — the public profile page uses the username param, so it's dynamic.
 
-**Router cache** — client-side, in-memory. When you navigate between pages in the app, Next.js keeps the RSC payloads around so going back is instant. Next.js 15 also reduced the default `staleTimes` for this cache, which helps avoid the most common "I just created something and it's not showing up" trap.
+**Router cache** — client-side, in-memory. When you navigate between pages in the app, Next.js keeps the RSC payloads around so going back is instant. Next.js 15+ reduced the default `staleTimes` for this cache, which helps avoid the most common "I just created something and it's not showing up" trap.
 
 Even with the saner defaults, our rule stays: **every server action that writes to the DB calls `revalidatePath` for every page that might display that data**. For projects, that's `/dashboard/projects` and `/[username]`. For profile edits, that's `/dashboard/profile` and `/[username]`. Worth the two extra lines.
 
 ---
+
+## Auth gating
+
+Next.js 16 docs explicitly recommend a **Data Access Layer** for real auth, with `proxy.ts` reserved for **optimistic** redirects only.
+
+`proxy.ts` (project root, not `app/`) — Next.js 16's renamed `middleware.ts`. Default runtime is Node, and the `runtime` option throws if set. Ours does a single cookie-presence check and redirects to `/login` if the user is hitting `/dashboard/*` or `/onboarding` without a session token. No DB hit, no decryption — purely a UX-layer redirect to spare the user a flash of dashboard chrome.
+
+`lib/dal.ts` is the real gate. It exports `getSession`, `requireSession`, `requireUsername`, and `requireOwnership`, all marked `'server-only'` and wrapped in React `cache()`. Pages, layouts, and **every server action** call into it. `requireSession` throws a `redirect('/login')` if there is no session; `requireUsername` chains to that and additionally redirects to `/onboarding` if the user has not claimed a username.
+
+Why both layers? `proxy.ts` runs on prefetched routes too — calling the DB there hammers it. The DAL also defends against the case where a server action's path is not covered by the proxy matcher. Action-level checks are the load-bearing security; the proxy is a UX optimization.
 
 ## Auth flow
 
@@ -199,22 +203,18 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/db';
 import * as schema from '@/db/schema';
 
+import { username } from 'better-auth/plugins';
+
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: 'sqlite',
-    schema
-  }),
+  database: drizzleAdapter(db, { provider: 'sqlite', schema }),
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!
     }
   },
-  user: {
-    additionalFields: {
-      username: { type: 'string', required: false, unique: true }
-    }
-  }
+  plugins: [username()],
+  experimental: { joins: true }
 });
 ```
 
@@ -239,11 +239,11 @@ export const authClient = createAuthClient({
 });
 ```
 
-On the server — in server components and server actions — get the session with `auth.api.getSession({ headers: await headers() })`. On the client, use the `authClient.useSession()` hook.
+On the server — in server components and server actions — get the session via the DAL (`requireSession`, `requireUsername`) rather than calling `auth.api.getSession` directly. The DAL wraps it in `cache()` so multiple call sites in one render share the result. On the client, use the `authClient.useSession()` hook.
 
-After a successful GitHub login, Better Auth creates or updates the user row. On the first login, our custom `username` field is null. The dashboard layout checks for this and redirects to `/onboarding`. The onboarding page is a server component with a single client form that calls `claimUsername()` — a server action that validates the string, checks uniqueness, updates the user row, and redirects to `/dashboard/profile`.
+After a successful GitHub login, Better Auth creates or updates the user row. On the first login, our custom `username` field is null. `requireUsername` redirects to `/onboarding` whenever it sees that. The onboarding page is a server component with a single client form that calls `claimUsername()` — a server action that validates the string, checks uniqueness (Better Auth's `additionalFields` does NOT enforce uniqueness on its own; we use the official `username` plugin plus a Drizzle `uniqueIndex`), updates the user row, and redirects to `/dashboard/profile`.
 
-Protected routes check the session in the layout or page. If there's no session, redirect to `/login`. Server actions check independently — never trust that the caller was on a protected page.
+Protected routes call a DAL helper at the top of the page or layout. Server actions check independently via the same helpers — never trust that the caller was on a protected page.
 
 ---
 
@@ -253,7 +253,7 @@ Protected routes check the session in the layout or page. If there's no session,
 
 1. User's browser requests `GET /jakub`
 2. Next.js matches the `[username]` dynamic route, invokes `page.tsx` as an async server component
-3. `generateMetadata` runs, awaits `params`, queries the user by username for the title and OG image URL, returns metadata for the `<head>`
+3. `generateMetadata` runs, awaits `params` (Next 16 — async), queries the user by username for the title and OG image URL, returns metadata for the `<head>`
 4. The page component runs, awaits `params`, Drizzle fetches the user with all their relations
 5. If not found, `notFound()` renders `not-found.tsx`
 6. Otherwise, the `<PublicProfile>` tree renders to HTML on the server
@@ -265,7 +265,7 @@ Protected routes check the session in the layout or page. If there's no session,
 1. User edits the form, clicks save
 2. React Hook Form validates against the Zod schema on the client. If it fails, the server is never hit
 3. On success, the form handler calls `await updateProject(values)` — a server action
-4. The action runs on the server. Parses the input through the same Zod schema. Calls `auth.api.getSession()` to get the logged-in user. Checks that the user owns the project. Writes to the DB. Calls `revalidatePath('/dashboard/projects')` and `revalidatePath('/[username]')`.
+4. The action runs on the server. Calls `requireOwnership` (DAL) to confirm session and that the user owns the project. Parses the input through the same Zod schema. Writes to the DB. Calls `revalidatePath('/dashboard/projects')` and `revalidatePath('/[username]')`.
 5. Action returns the updated project
 6. The client form shows a toast and optionally resets
 7. When the user navigates back to the projects list, Next.js sees the router cache is stale, fetches the fresh RSC payload, and the list shows the update
@@ -281,8 +281,10 @@ Things that only exist server-side:
 - Drizzle client (`db/index.ts`)
 - Server action files (`server-actions/*`)
 - Better Auth server config (`lib/auth.ts`)
+- Data Access Layer (`lib/dal.ts` — marked `'server-only'`)
+- `proxy.ts` (runs in the Node runtime, not the bundle)
 - OG image route
-- Anthropic SDK calls (only from inside server actions)
+- OpenRouter / OpenAI SDK calls (only from inside server actions)
 
 Things that can run either side:
 
@@ -297,7 +299,7 @@ Things that only run client-side:
 - Better Auth client (`lib/auth-client.ts`)
 - Anything using the `window` object
 
-Rule of thumb: if you need the secret, it goes server-only. The `ANTHROPIC_API_KEY`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_SECRET`, and `AUTH_TOKEN` never touch a client bundle — they're read from `process.env` inside server-only code.
+Rule of thumb: if you need the secret, it goes server-only. The `OPENROUTER_API_KEY`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_SECRET`, and `DATABASE_AUTH_TOKEN` never touch a client bundle — they're read from `process.env` inside server-only code.
 
 ---
 

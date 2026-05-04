@@ -62,7 +62,9 @@ Username change (with warning that it breaks old share links), account deletion,
 
 ## AI assist
 
-Three AI features, all routed through server actions in `server-actions/ai.ts`. Each one makes a single Claude API call, returns the result, and lets the user edit before saving.
+Three AI features, all routed through server actions in `server-actions/ai.ts`. Each one makes a single OpenRouter call (OpenAI-compatible chat completions endpoint, free models), returns the result, and lets the user edit before saving.
+
+The default model is configurable via `OPENROUTER_MODEL` (default: `deepseek/deepseek-chat-v3.1:free`). Free tier limits apply — 20 req/min, 50/day on a $0 balance — which is fine for a student project; on rate-limit errors we surface "Try again in a moment" to the user.
 
 The client side uses Tanstack Query mutations so we get loading states on the buttons. On success, the form field gets updated via `setValue` and the user can edit further.
 
@@ -155,17 +157,17 @@ A progress bar in the dashboard sidebar showing how fleshed out the profile is, 
 
 Weights:
 
-| Item | Points | Condition |
-|---|---|---|
-| Display name set | 10 | `profile.name` not empty |
-| Headline set | 10 | `profile.headline` not empty |
-| Bio set | 15 | `profile.bio` at least 40 characters |
-| Avatar set | 5 | `profile.avatarUrl` not empty |
-| At least 1 project | 15 | `projects.length >= 1` |
-| At least 3 projects | 10 | `projects.length >= 3` |
-| At least 5 skills | 15 | `skills.length >= 5` |
-| At least 1 experience entry | 10 | `experience.length >= 1` |
-| At least 1 social link | 10 | `socials.length >= 1` |
+| Item                        | Points | Condition                            |
+| --------------------------- | ------ | ------------------------------------ |
+| Display name set            | 10     | `profile.name` not empty             |
+| Headline set                | 10     | `profile.headline` not empty         |
+| Bio set                     | 15     | `profile.bio` at least 40 characters |
+| Avatar set                  | 5      | `profile.avatarUrl` not empty        |
+| At least 1 project          | 15     | `projects.length >= 1`               |
+| At least 3 projects         | 10     | `projects.length >= 3`               |
+| At least 5 skills           | 15     | `skills.length >= 5`                 |
+| At least 1 experience entry | 10     | `experience.length >= 1`             |
+| At least 1 social link      | 10     | `socials.length >= 1`                |
 
 Total: 100.
 
