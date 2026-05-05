@@ -14,10 +14,14 @@ const client = new OpenAI({
   }
 });
 
-const MODEL = process.env.OPENROUTER_MODEL ?? 'deepseek/deepseek-chat-v3.1:free';
+// Comma-separated for upstream-fallback: free models on OpenRouter are routinely
+// rate-limited at the provider level (e.g. Google AI Studio), so a second model
+// from a different upstream is the only way to keep the interaction alive.
+const MODELS = (process.env.OPENROUTER_MODEL ?? 'deepseek/deepseek-chat-v3.1:free')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
-// Retry once on 429/5xx — OpenRouter's free tier shares a tight rate-limit bucket
-// across all models and a single transient hit otherwise breaks the user's interaction.
 const isTransient = (err: unknown) => {
   const status = (err as { status?: number })?.status;
   return status === 429 || (typeof status === 'number' && status >= 500);
@@ -25,24 +29,23 @@ const isTransient = (err: unknown) => {
 
 async function complete(prompt: string, maxTokens = 400): Promise<string> {
   let lastErr: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const res = await client.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: maxTokens,
-        temperature: 0.7
-      });
-      const text = res.choices[0]?.message?.content?.trim();
-      if (!text) throw new Error('empty AI response');
-      return text;
-    } catch (err) {
-      lastErr = err;
-      if (attempt === 0 && isTransient(err)) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        continue;
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const res = await client.chat.completions.create({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: maxTokens,
+          temperature: 0.7
+        });
+        const text = res.choices[0]?.message?.content?.trim();
+        if (!text) throw new Error('empty AI response');
+        return text;
+      } catch (err) {
+        lastErr = err;
+        if (!isTransient(err)) throw err;
+        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 800));
       }
-      throw err;
     }
   }
   throw lastErr;
