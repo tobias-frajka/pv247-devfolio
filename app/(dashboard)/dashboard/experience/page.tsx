@@ -1,16 +1,29 @@
-export default function ExperiencePage() {
+import { eq } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { experience } from '@/db/schema';
+import { requireUsername } from '@/lib/dal';
+
+import { ExperienceClient } from './experience-client';
+
+export default async function ExperiencePage() {
+  const session = await requireUsername();
+
+  const experiences = await db.query.experience.findMany({
+    where: eq(experience.userId, session.user.id),
+    orderBy: (e, { desc }) => [desc(e.startDate)]
+  });
+
   return (
-    <div className="flex flex-col gap-3">
-      <h1
-        className="m-0"
-        style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-      >
-        Experience
-      </h1>
-      <p className="m-0" style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}>
-        Timeline editor. &quot;Currently working here&quot; nulls the end date. Server actions:{' '}
-        <code>createExperience</code>, <code>updateExperience</code>, <code>deleteExperience</code>.
-      </p>
-    </div>
+    <ExperienceClient
+      experiences={experiences.map(e => ({
+        id: e.id,
+        company: e.company,
+        role: e.role,
+        startDate: e.startDate,
+        endDate: e.endDate ?? null,
+        description: e.description ?? null
+      }))}
+    />
   );
 }
