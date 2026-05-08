@@ -1,17 +1,33 @@
-export default function SkillsPage() {
+import { eq } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { project, skill } from '@/db/schema';
+import type { SkillCategory } from '@/db/schema/skill';
+import { requireUsername } from '@/lib/dal';
+
+import { SkillsClient } from './skills-client';
+
+export default async function SkillsPage() {
+  const session = await requireUsername();
+  const userId = session.user.id;
+
+  const [skills, projects] = await Promise.all([
+    db.query.skill.findMany({ where: eq(skill.userId, userId) }),
+    db.query.project.findMany({ where: eq(project.userId, userId) })
+  ]);
+
+  const skillNames = new Set(skills.map(s => s.name.toLowerCase()));
+
+  const allTechTags = projects.flatMap(p => p.techStack ?? []);
+  const uniqueTags = [...new Set(allTechTags)];
+  const suggestions = uniqueTags
+    .filter(tag => !skillNames.has(tag.toLowerCase()))
+    .map(name => ({ name, category: 'Tools' as SkillCategory }));
+
   return (
-    <div className="flex flex-col gap-3">
-      <h1
-        className="m-0"
-        style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-      >
-        Skills
-      </h1>
-      <p className="m-0" style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}>
-        Tag input per category. Suggested-skills panel reads the union of project tech stacks minus
-        existing skills. Server actions: <code>addSkill</code>, <code>updateSkillCategory</code>,{' '}
-        <code>removeSkill</code>.
-      </p>
-    </div>
+    <SkillsClient
+      skills={skills.map(s => ({ id: s.id, name: s.name, category: s.category }))}
+      suggestions={suggestions}
+    />
   );
 }
