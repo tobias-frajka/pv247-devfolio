@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -126,9 +126,12 @@ function ProjectDialogForm({
   const {
     register,
     setValue,
-    watch,
+    getValues,
+    control,
     formState: { errors }
   } = form;
+
+  const techStack = useWatch({ control, name: 'techStack' });
 
   const improveMutation = useMutation({
     mutationFn: improveDescription,
@@ -167,9 +170,9 @@ function ProjectDialogForm({
             disabled={improveMutation.isPending}
             onClick={() =>
               improveMutation.mutate({
-                title: watch('title') || 'Project',
-                techStack: watch('techStack') ?? [],
-                description: watch('description') || ''
+                title: getValues('title') || 'Project',
+                techStack: getValues('techStack') ?? [],
+                description: getValues('description') || ''
               })
             }
           >
@@ -197,7 +200,7 @@ function ProjectDialogForm({
 
       <div className="flex flex-col gap-1.5">
         <Label>Tech stack</Label>
-        <TagInput value={watch('techStack') ?? []} onChange={v => setValue('techStack', v)} />
+        <TagInput value={techStack ?? []} onChange={v => setValue('techStack', v)} />
         {errors.techStack && (
           <p className="text-xs" style={{ color: 'var(--danger)' }}>
             {errors.techStack.message}

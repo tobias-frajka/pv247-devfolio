@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
@@ -58,9 +58,12 @@ export function ProfileForm({ initialProfile, skills }: Props) {
   const {
     register,
     setValue,
-    watch,
+    getValues,
+    control,
     formState: { errors }
   } = form;
+
+  const availableForWork = useWatch({ control, name: 'availableForWork' });
 
   const generateBioMutation = useMutation({
     mutationFn: generateBio,
@@ -89,7 +92,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
   });
 
   const handleOpenGenerateBio = () => {
-    setBioRole(watch('headline') ?? '');
+    setBioRole(getValues('headline') ?? '');
     setBioDialogOpen(true);
   };
 
@@ -103,7 +106,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
 
   const handleImproveBio = () => {
     generateBioMutation.mutate({
-      role: watch('headline') || 'Developer',
+      role: getValues('headline') || 'Developer',
       yearsExperience: 3,
       topSkills: skills.slice(0, 3).map(s => s.name)
     });
@@ -289,7 +292,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
             </p>
           </div>
           <Switch
-            checked={watch('availableForWork')}
+            checked={availableForWork}
             onCheckedChange={v => setValue('availableForWork', v)}
           />
         </div>

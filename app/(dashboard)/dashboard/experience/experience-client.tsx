@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -91,10 +91,10 @@ function ExperienceDialogForm({
   const {
     register,
     setValue,
-    watch,
+    control,
     formState: { errors }
   } = form;
-  const currentlyWorking = watch('currentlyWorking');
+  const currentlyWorking = useWatch({ control, name: 'currentlyWorking' });
 
   const onSubmit = form.handleSubmit(data => {
     startTransition(async () => {
