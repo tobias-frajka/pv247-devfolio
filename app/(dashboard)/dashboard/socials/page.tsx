@@ -1,16 +1,17 @@
-export default function SocialsPage() {
-  return (
-    <div className="flex flex-col gap-3">
-      <h1
-        className="m-0"
-        style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-      >
-        Socials
-      </h1>
-      <p className="m-0" style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}>
-        One row per fixed platform (github, linkedin, x, website, email). Leave blank to omit.
-        Server actions: <code>upsertSocial</code>, <code>removeSocial</code>.
-      </p>
-    </div>
-  );
+import { eq } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { social } from '@/db/schema';
+import { requireUsername } from '@/lib/dal';
+
+import { SocialsForm } from './socials-form';
+
+export default async function SocialsPage() {
+  const session = await requireUsername();
+
+  const socials = await db.query.social.findMany({
+    where: eq(social.userId, session.user.id)
+  });
+
+  return <SocialsForm initialSocials={socials.map(s => ({ platform: s.platform, url: s.url }))} />;
 }

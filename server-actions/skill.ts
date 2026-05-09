@@ -15,7 +15,10 @@ export async function addSkill(input: unknown) {
   const [row] = await db
     .insert(skill)
     .values({ ...data, userId: session.user.id })
+    .onConflictDoNothing()
     .returning();
+
+  if (!row) throw new Error('Skill already added');
 
   revalidatePath('/dashboard/skills');
   revalidatePath(`/${session.user.username}`);
