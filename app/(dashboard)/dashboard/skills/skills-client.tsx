@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { SKILL_CATEGORIES, type SkillCategory } from '@/db/schema/skill';
 import { addSkill, removeSkill } from '@/server-actions/skill';
@@ -90,11 +91,7 @@ function CategorySection({
           Add
         </Button>
       </div>
-      {errorMessage && (
-        <p className="m-0 text-sm" style={{ color: 'var(--danger, #dc2626)' }}>
-          {errorMessage}
-        </p>
-      )}
+      <FormError className="text-sm">{errorMessage}</FormError>
     </div>
   );
 }
