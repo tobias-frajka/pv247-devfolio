@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { Link as LinkIcon, Briefcase, Globe, Mail, AtSign } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FormError } from '@/components/ui/form-error';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '@/db/schema/social';
 import { upsertManySocials } from '@/server-actions/social';
 
@@ -65,11 +67,12 @@ type Props = {
 };
 
 export function SocialsForm({ initialSocials }: Props) {
-  const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const existing = Object.fromEntries(initialSocials.map(s => [s.platform, s.url]));
+  const existing = useMemo(
+    () => Object.fromEntries(initialSocials.map(s => [s.platform, s.url])),
+    [initialSocials]
+  );
 
   const form = useForm<SocialsFormValues>({
     resolver: zodResolver(socialsFormSchema),
@@ -81,18 +84,16 @@ export function SocialsForm({ initialSocials }: Props) {
     formState: { errors }
   } = form;
 
-  const onSubmit = form.handleSubmit(data => {
-    startTransition(async () => {
-      try {
-        await upsertManySocials(data as Record<SocialPlatform, string>);
-        setSaved(true);
-        setSaveError(null);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save');
-      }
-    });
+  const saveMutation = useMutation({
+    mutationFn: (data: SocialsFormValues) =>
+      upsertManySocials(data as Record<SocialPlatform, string>),
+    onSuccess: () => {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   });
+
+  const onSubmit = form.handleSubmit(data => saveMutation.mutate(data));
 
   return (
     <div className="flex flex-col gap-8">
@@ -124,29 +125,21 @@ export function SocialsForm({ initialSocials }: Props) {
                 placeholder={meta.placeholder}
                 {...register(platform)}
               />
-              {error && (
-                <p className="text-xs" style={{ color: 'var(--danger)' }}>
-                  {error.message}
-                </p>
-              )}
+              <FormError>{error?.message}</FormError>
             </div>
           );
         })}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending}>
-            {pending ? 'Saving…' : 'Save socials'}
+          <Button type="submit" disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? 'Saving…' : 'Save socials'}
           </Button>
           {saved && (
             <span className="text-sm" style={{ color: 'var(--ok)' }}>
               Saved
             </span>
           )}
-          {saveError && (
-            <span className="text-sm" style={{ color: 'var(--danger)' }}>
-              {saveError}
-            </span>
-          )}
+          <FormError className="text-sm">{saveMutation.error?.message}</FormError>
         </div>
       </form>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
@@ -23,13 +24,15 @@ function CategorySection({
   skills,
   onRemove,
   onAdd,
-  pending
+  removingId,
+  pendingAdd
 }: {
   category: SkillCategory;
   skills: Skill[];
   onRemove: (id: string) => void;
   onAdd: (name: string, category: SkillCategory) => void;
-  pending: boolean;
+  removingId: string | null;
+  pendingAdd: boolean;
 }) {
   const [input, setInput] = useState('');
 
@@ -54,7 +57,7 @@ function CategorySection({
               type="button"
               className="flex items-center text-[var(--ink-3)] hover:text-[var(--ink)]"
               onClick={() => onRemove(s.id)}
-              disabled={pending}
+              disabled={removingId === s.id}
             >
               <X size={12} />
             </button>
@@ -73,14 +76,14 @@ function CategorySection({
           }}
           placeholder={`Add ${category.toLowerCase()} skill…`}
           className="max-w-sm"
-          disabled={pending}
+          disabled={pendingAdd}
         />
         <Button
           type="button"
           variant="secondary"
           size="sm"
           onClick={submit}
-          disabled={pending || !input.trim()}
+          disabled={pendingAdd || !input.trim()}
         >
           Add
         </Button>
@@ -91,31 +94,31 @@ function CategorySection({
 
 export function SkillsClient({ skills, suggestions }: Props) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, SkillCategory>>(
     Object.fromEntries(suggestions.map(s => [s.name, s.category]))
   );
 
+  const addMutation = useMutation({
+    mutationFn: addSkill,
+    onSuccess: () => router.refresh()
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: removeSkill,
+    onSuccess: () => router.refresh()
+  });
+
   const handleAdd = (name: string, category: SkillCategory) => {
-    startTransition(async () => {
-      await addSkill({ name, category });
-      router.refresh();
-    });
+    addMutation.mutate({ name, category });
   };
 
   const handleRemove = (id: string) => {
-    startTransition(async () => {
-      await removeSkill(id);
-      router.refresh();
-    });
+    removeMutation.mutate(id);
   };
 
   const handleAddSuggestion = (name: string) => {
     const category = suggestionCategories[name] ?? 'Tools';
-    startTransition(async () => {
-      await addSkill({ name, category });
-      router.refresh();
-    });
+    addMutation.mutate({ name, category });
   };
 
   const handleChangeSuggestionCategory = (name: string, category: SkillCategory) => {
@@ -129,6 +132,11 @@ export function SkillsClient({ skills, suggestions }: Props) {
     },
     {} as Record<SkillCategory, Skill[]>
   );
+
+  const removingId =
+    removeMutation.isPending && typeof removeMutation.variables === 'string'
+      ? removeMutation.variables
+      : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -168,7 +176,7 @@ export function SkillsClient({ skills, suggestions }: Props) {
                   type="button"
                   variant="secondary"
                   size="xs"
-                  disabled={pending}
+                  disabled={addMutation.isPending}
                   onClick={() => handleAddSuggestion(s.name)}
                 >
                   Add
@@ -187,7 +195,8 @@ export function SkillsClient({ skills, suggestions }: Props) {
             skills={skillsByCategory[cat]}
             onAdd={handleAdd}
             onRemove={handleRemove}
-            pending={pending}
+            removingId={removingId}
+            pendingAdd={addMutation.isPending}
           />
         ))}
       </div>

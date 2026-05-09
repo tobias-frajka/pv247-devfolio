@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Link as LinkIcon, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { FormError } from '@/components/ui/form-error';
 import {
   DialogRoot,
   DialogContent,
@@ -18,7 +20,6 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { z } from 'zod';
 import { projectSchema } from '@/schemas/project';
 import { improveDescription } from '@/server-actions/ai';
 import { createProject, deleteProject, updateProject } from '@/server-actions/project';
@@ -91,15 +92,16 @@ function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]
 function ProjectDialogForm({
   initial,
   onSave,
-  onCancel
+  onCancel,
+  isPending,
+  error
 }: {
   initial: Project | null;
-  onSave: (data: ProjectFormValues) => Promise<void>;
+  onSave: (data: ProjectFormValues) => void;
   onCancel: () => void;
+  isPending: boolean;
+  error: Error | null;
 }) {
-  const [saving, startTransition] = useTransition();
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
@@ -126,26 +128,14 @@ function ProjectDialogForm({
     onSuccess: result => setValue('description', result ?? '')
   });
 
-  const onSubmit = form.handleSubmit(data => {
-    startTransition(async () => {
-      try {
-        await onSave(data);
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save');
-      }
-    });
-  });
+  const onSubmit = form.handleSubmit(data => onSave(data));
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="proj-title">Title</Label>
         <Input id="proj-title" placeholder="My Project" {...register('title')} />
-        {errors.title && (
-          <p className="text-xs" style={{ color: 'var(--danger)' }}>
-            {errors.title.message}
-          </p>
-        )}
+        <FormError>{errors.title?.message}</FormError>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -174,26 +164,14 @@ function ProjectDialogForm({
           className={improveMutation.isPending ? 'opacity-60' : ''}
           {...register('description')}
         />
-        {improveMutation.isError && (
-          <p className="text-xs" style={{ color: 'var(--danger)' }}>
-            AI unavailable — try again in a moment
-          </p>
-        )}
-        {errors.description && (
-          <p className="text-xs" style={{ color: 'var(--danger)' }}>
-            {errors.description.message}
-          </p>
-        )}
+        {improveMutation.isError && <FormError>AI unavailable — try again in a moment</FormError>}
+        <FormError>{errors.description?.message}</FormError>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Label>Tech stack</Label>
         <TagInput value={techStack ?? []} onChange={v => setValue('techStack', v)} />
-        {errors.techStack && (
-          <p className="text-xs" style={{ color: 'var(--danger)' }}>
-            {errors.techStack.message}
-          </p>
-        )}
+        <FormError>{errors.techStack?.message}</FormError>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -205,35 +183,23 @@ function ProjectDialogForm({
             placeholder="https://github.com/…"
             {...register('githubUrl')}
           />
-          {errors.githubUrl && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.githubUrl.message}
-            </p>
-          )}
+          <FormError>{errors.githubUrl?.message}</FormError>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="proj-live">Live URL</Label>
           <Input id="proj-live" type="url" placeholder="https://…" {...register('liveUrl')} />
-          {errors.liveUrl && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.liveUrl.message}
-            </p>
-          )}
+          <FormError>{errors.liveUrl?.message}</FormError>
         </div>
       </div>
 
-      {saveError && (
-        <p className="text-sm" style={{ color: 'var(--danger)' }}>
-          {saveError}
-        </p>
-      )}
+      <FormError className="text-sm">{error?.message}</FormError>
 
       <DialogFooter>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : initial ? 'Update project' : 'Add project'}
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : initial ? 'Update project' : 'Add project'}
         </Button>
       </DialogFooter>
     </form>
@@ -250,24 +216,41 @@ export function ProjectsClient({ projects }: Props) {
     onSuccess: () => router.refresh()
   });
 
+  const saveMutation = useMutation({
+    mutationFn: async ({
+      editingId,
+      data
+    }: {
+      editingId: string | null;
+      data: ProjectFormValues;
+    }) => {
+      if (editingId) {
+        await updateProject(editingId, data);
+      } else {
+        await createProject(data);
+      }
+    },
+    onSuccess: () => {
+      router.refresh();
+      setDialogOpen(false);
+    }
+  });
+
   const openAdd = () => {
+    saveMutation.reset();
     setEditing(null);
     setDialogOpen(true);
   };
 
   const openEdit = (p: Project) => {
+    saveMutation.reset();
     setEditing(p);
     setDialogOpen(true);
   };
 
-  const handleSave = async (data: ProjectFormValues) => {
-    if (editing) {
-      await updateProject(editing.id, data);
-    } else {
-      await createProject(data);
-    }
-    router.refresh();
-    setDialogOpen(false);
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) saveMutation.reset();
+    setDialogOpen(open);
   };
 
   return (
@@ -357,7 +340,7 @@ export function ProjectsClient({ projects }: Props) {
         </ul>
       )}
 
-      <DialogRoot open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogRoot open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit project' : 'Add project'}</DialogTitle>
@@ -365,8 +348,10 @@ export function ProjectsClient({ projects }: Props) {
           <ProjectDialogForm
             key={editing?.id ?? 'new'}
             initial={editing}
-            onSave={handleSave}
-            onCancel={() => setDialogOpen(false)}
+            onSave={data => saveMutation.mutate({ editingId: editing?.id ?? null, data })}
+            onCancel={() => handleDialogOpenChange(false)}
+            isPending={saveMutation.isPending}
+            error={saveMutation.error}
           />
         </DialogContent>
       </DialogRoot>

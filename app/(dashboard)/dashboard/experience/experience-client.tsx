@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { FormError } from '@/components/ui/form-error';
 import {
   DialogRoot,
   DialogContent,
@@ -28,6 +29,14 @@ type Experience = {
   startDate: Date;
   endDate: Date | null;
   description: string | null;
+};
+
+type SaveData = {
+  company: string;
+  role: string;
+  startDate: Date;
+  endDate: Date | null;
+  description?: string;
 };
 
 type Props = { experiences: Experience[] };
@@ -75,21 +84,16 @@ function formatRange(start: Date, end: Date | null) {
 function ExperienceDialogForm({
   initial,
   onSave,
-  onCancel
+  onCancel,
+  isPending,
+  error
 }: {
   initial: Experience | null;
-  onSave: (data: {
-    company: string;
-    role: string;
-    startDate: Date;
-    endDate: Date | null;
-    description?: string;
-  }) => Promise<void>;
+  onSave: (data: SaveData) => void;
   onCancel: () => void;
+  isPending: boolean;
+  error: Error | null;
 }) {
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -109,23 +113,16 @@ function ExperienceDialogForm({
     formState: { errors }
   } = form;
   const currentlyWorking = useWatch({ control, name: 'currentlyWorking' });
+  const cw = register('currentlyWorking');
 
-  const onSubmit = form.handleSubmit(async data => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await onSave({
-        company: data.company,
-        role: data.role,
-        startDate: fromDateString(data.startDate),
-        endDate: data.currentlyWorking ? null : data.endDate ? fromDateString(data.endDate) : null,
-        description: data.description
-      });
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
+  const onSubmit = form.handleSubmit(data => {
+    onSave({
+      company: data.company,
+      role: data.role,
+      startDate: fromDateString(data.startDate),
+      endDate: data.currentlyWorking ? null : data.endDate ? fromDateString(data.endDate) : null,
+      description: data.description
+    });
   });
 
   return (
@@ -134,20 +131,12 @@ function ExperienceDialogForm({
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="exp-company">Company</Label>
           <Input id="exp-company" placeholder="Acme Corp" {...register('company')} />
-          {errors.company && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.company.message}
-            </p>
-          )}
+          <FormError>{errors.company?.message}</FormError>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="exp-role">Role</Label>
           <Input id="exp-role" placeholder="Software Engineer" {...register('role')} />
-          {errors.role && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.role.message}
-            </p>
-          )}
+          <FormError>{errors.role?.message}</FormError>
         </div>
       </div>
 
@@ -155,20 +144,12 @@ function ExperienceDialogForm({
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="exp-start">Start date</Label>
           <Input id="exp-start" type="date" {...register('startDate')} />
-          {errors.startDate && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.startDate.message}
-            </p>
-          )}
+          <FormError>{errors.startDate?.message}</FormError>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="exp-end">End date</Label>
           <Input id="exp-end" type="date" disabled={currentlyWorking} {...register('endDate')} />
-          {errors.endDate && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.endDate.message}
-            </p>
-          )}
+          <FormError>{errors.endDate?.message}</FormError>
         </div>
       </div>
 
@@ -176,8 +157,9 @@ function ExperienceDialogForm({
         <input
           type="checkbox"
           className="border-input accent-primary h-4 w-4 rounded"
-          {...register('currentlyWorking')}
+          {...cw}
           onChange={e => {
+            cw.onChange(e);
             if (e.target.checked) setValue('endDate', '');
           }}
         />
@@ -192,25 +174,17 @@ function ExperienceDialogForm({
           placeholder="What did you work on? (optional)"
           {...register('description')}
         />
-        {errors.description && (
-          <p className="text-xs" style={{ color: 'var(--danger)' }}>
-            {errors.description.message}
-          </p>
-        )}
+        <FormError>{errors.description?.message}</FormError>
       </div>
 
-      {saveError && (
-        <p className="text-sm" style={{ color: 'var(--danger)' }}>
-          {saveError}
-        </p>
-      )}
+      <FormError className="text-sm">{error?.message}</FormError>
 
       <DialogFooter>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : initial ? 'Update' : 'Add experience'}
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : initial ? 'Update' : 'Add experience'}
         </Button>
       </DialogFooter>
     </form>
@@ -227,24 +201,35 @@ export function ExperienceClient({ experiences }: Props) {
     onSuccess: () => router.refresh()
   });
 
+  const saveMutation = useMutation({
+    mutationFn: async ({ editingId, data }: { editingId: string | null; data: SaveData }) => {
+      if (editingId) {
+        await updateExperience(editingId, data);
+      } else {
+        await createExperience(data);
+      }
+    },
+    onSuccess: () => {
+      router.refresh();
+      setDialogOpen(false);
+    }
+  });
+
   const openAdd = () => {
+    saveMutation.reset();
     setEditing(null);
     setDialogOpen(true);
   };
 
   const openEdit = (e: Experience) => {
+    saveMutation.reset();
     setEditing(e);
     setDialogOpen(true);
   };
 
-  const handleSave = async (data: Parameters<typeof createExperience>[0]) => {
-    if (editing) {
-      await updateExperience(editing.id, data);
-    } else {
-      await createExperience(data);
-    }
-    router.refresh();
-    setDialogOpen(false);
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) saveMutation.reset();
+    setDialogOpen(open);
   };
 
   return (
@@ -305,7 +290,7 @@ export function ExperienceClient({ experiences }: Props) {
         </ul>
       )}
 
-      <DialogRoot open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogRoot open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit experience' : 'Add experience'}</DialogTitle>
@@ -313,8 +298,10 @@ export function ExperienceClient({ experiences }: Props) {
           <ExperienceDialogForm
             key={editing?.id ?? 'new'}
             initial={editing}
-            onSave={handleSave}
-            onCancel={() => setDialogOpen(false)}
+            onSave={data => saveMutation.mutate({ editingId: editing?.id ?? null, data })}
+            onCancel={() => handleDialogOpenChange(false)}
+            isPending={saveMutation.isPending}
+            error={saveMutation.error}
           />
         </DialogContent>
       </DialogRoot>

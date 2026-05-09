@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { FormError } from '@/components/ui/form-error';
 import {
   DialogRoot,
   DialogContent,
@@ -37,9 +38,7 @@ type Props = {
 
 export function ProfileForm({ initialProfile, skills }: Props) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const [bioRole, setBioRole] = useState('');
@@ -65,6 +64,15 @@ export function ProfileForm({ initialProfile, skills }: Props) {
     formState: { errors }
   } = form;
 
+  const saveMutation = useMutation({
+    mutationFn: upsertProfile,
+    onSuccess: () => {
+      router.refresh();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  });
+
   const generateBioMutation = useMutation({
     mutationFn: generateBio,
     onSuccess: bio => {
@@ -78,19 +86,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
     onSuccess: titles => setSuggestedTitles(titles ?? [])
   });
 
-  const onSubmit = form.handleSubmit(data => {
-    startTransition(async () => {
-      try {
-        await upsertProfile(data);
-        router.refresh();
-        setSaved(true);
-        setSaveError(null);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save');
-      }
-    });
-  });
+  const onSubmit = form.handleSubmit(data => saveMutation.mutate(data));
 
   const handleOpenGenerateBio = () => {
     setBioRole(getValues('headline') ?? '');
@@ -148,9 +144,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
               />
             </div>
             {generateBioMutation.isError && (
-              <p className="text-sm" style={{ color: 'var(--danger)' }}>
-                AI unavailable — try again in a moment
-              </p>
+              <FormError className="text-sm">AI unavailable — try again in a moment</FormError>
             )}
           </div>
           <DialogFooter>
@@ -172,11 +166,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="displayName">Display name</Label>
           <Input id="displayName" placeholder="Jane Smith" {...register('displayName')} />
-          {errors.displayName && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.displayName.message}
-            </p>
-          )}
+          <FormError>{errors.displayName?.message}</FormError>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -210,11 +200,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
             </div>
           )}
           <Input id="headline" placeholder="Full-stack Developer" {...register('headline')} />
-          {errors.headline && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.headline.message}
-            </p>
-          )}
+          <FormError>{errors.headline?.message}</FormError>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -254,15 +240,9 @@ export function ProfileForm({ initialProfile, skills }: Props) {
             </p>
           )}
           {generateBioMutation.isError && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              AI unavailable — try again in a moment
-            </p>
+            <FormError>AI unavailable — try again in a moment</FormError>
           )}
-          {errors.bio && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.bio.message}
-            </p>
-          )}
+          <FormError>{errors.bio?.message}</FormError>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -278,11 +258,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
             placeholder="https://github.com/you.png"
             {...register('avatarUrl')}
           />
-          {errors.avatarUrl && (
-            <p className="text-xs" style={{ color: 'var(--danger)' }}>
-              {errors.avatarUrl.message}
-            </p>
-          )}
+          <FormError>{errors.avatarUrl?.message}</FormError>
         </div>
 
         <div className="flex items-center justify-between rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] px-4 py-3">
@@ -302,19 +278,15 @@ export function ProfileForm({ initialProfile, skills }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending}>
-            {pending ? 'Saving…' : 'Save profile'}
+          <Button type="submit" disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? 'Saving…' : 'Save profile'}
           </Button>
           {saved && (
             <span className="text-sm" style={{ color: 'var(--ok)' }}>
               Saved
             </span>
           )}
-          {saveError && (
-            <span className="text-sm" style={{ color: 'var(--danger)' }}>
-              {saveError}
-            </span>
-          )}
+          <FormError className="text-sm">{saveMutation.error?.message}</FormError>
         </div>
       </form>
     </>
