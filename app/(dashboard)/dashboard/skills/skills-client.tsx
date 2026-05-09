@@ -25,7 +25,8 @@ function CategorySection({
   onRemove,
   onAdd,
   removingId,
-  pendingAdd
+  pendingAdd,
+  errorMessage
 }: {
   category: SkillCategory;
   skills: Skill[];
@@ -33,6 +34,7 @@ function CategorySection({
   onAdd: (name: string, category: SkillCategory) => void;
   removingId: string | null;
   pendingAdd: boolean;
+  errorMessage: string | null;
 }) {
   const [input, setInput] = useState('');
 
@@ -88,6 +90,11 @@ function CategorySection({
           Add
         </Button>
       </div>
+      {errorMessage && (
+        <p className="m-0 text-sm" style={{ color: 'var(--danger, #dc2626)' }}>
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }
@@ -138,6 +145,18 @@ export function SkillsClient({ skills, suggestions }: Props) {
       ? removeMutation.variables
       : null;
 
+  const pendingVariables =
+    addMutation.isPending && addMutation.variables
+      ? (addMutation.variables as { name: string; category: SkillCategory })
+      : null;
+  const pendingCategory = pendingVariables?.category ?? null;
+  const pendingName = pendingVariables?.name ?? null;
+  const errorVariables = addMutation.error
+    ? (addMutation.variables as { name: string; category: SkillCategory } | undefined)
+    : null;
+  const errorCategory = errorVariables?.category ?? null;
+  const errorMessage = addMutation.error?.message ?? null;
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
@@ -176,7 +195,7 @@ export function SkillsClient({ skills, suggestions }: Props) {
                   type="button"
                   variant="secondary"
                   size="xs"
-                  disabled={addMutation.isPending}
+                  disabled={pendingName === s.name}
                   onClick={() => handleAddSuggestion(s.name)}
                 >
                   Add
@@ -196,7 +215,8 @@ export function SkillsClient({ skills, suggestions }: Props) {
             onAdd={handleAdd}
             onRemove={handleRemove}
             removingId={removingId}
-            pendingAdd={addMutation.isPending}
+            pendingAdd={pendingCategory === cat}
+            errorMessage={errorCategory === cat ? errorMessage : null}
           />
         ))}
       </div>

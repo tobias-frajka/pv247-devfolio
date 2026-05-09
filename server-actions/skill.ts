@@ -18,6 +18,8 @@ export async function addSkill(input: unknown) {
     .onConflictDoNothing()
     .returning();
 
+  if (!row) throw new Error('Skill already added');
+
   revalidatePath('/dashboard/skills');
   revalidatePath(`/${session.user.username}`);
   return row;
