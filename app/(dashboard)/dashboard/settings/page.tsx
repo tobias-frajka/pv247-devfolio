@@ -1,16 +1,8 @@
-export default function SettingsPage() {
-  return (
-    <div className="flex flex-col gap-3">
-      <h1
-        className="m-0"
-        style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-      >
-        Settings
-      </h1>
-      <p className="m-0" style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}>
-        Username change (warns about old share links). Delete account. Server actions:{' '}
-        <code>changeUsername</code>, <code>deleteAccount</code>.
-      </p>
-    </div>
-  );
+import { requireUsername } from '@/lib/dal';
+
+import { SettingsClient } from './settings-client';
+
+export default async function SettingsPage() {
+  const session = await requireUsername();
+  return <SettingsClient currentUsername={session.user.username} email={session.user.email} />;
 }
