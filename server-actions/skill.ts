@@ -15,6 +15,7 @@ export async function addSkill(input: unknown) {
   const [row] = await db
     .insert(skill)
     .values({ ...data, userId: session.user.id })
+    .onConflictDoNothing()
     .returning();
 
   revalidatePath('/dashboard/skills');

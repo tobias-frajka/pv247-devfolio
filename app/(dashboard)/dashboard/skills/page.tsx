@@ -19,8 +19,12 @@ export default async function SkillsPage() {
   const skillNames = new Set(skills.map(s => s.name.toLowerCase()));
 
   const allTechTags = projects.flatMap(p => p.techStack ?? []);
-  const uniqueTags = [...new Set(allTechTags)];
-  const suggestions = uniqueTags
+  const seenLower = new Map<string, string>();
+  for (const tag of allTechTags) {
+    const lower = tag.toLowerCase();
+    if (!seenLower.has(lower)) seenLower.set(lower, tag);
+  }
+  const suggestions = [...seenLower.values()]
     .filter(tag => !skillNames.has(tag.toLowerCase()))
     .map(name => ({ name, category: 'Tools' as SkillCategory }));
 

@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 import { user } from './auth';
 
@@ -20,5 +20,8 @@ export const skill = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date())
   },
-  table => [index('skill_user_id_idx').on(table.userId)]
+  table => [
+    index('skill_user_id_idx').on(table.userId),
+    uniqueIndex('skill_user_name_unique').on(table.userId, table.name)
+  ]
 );

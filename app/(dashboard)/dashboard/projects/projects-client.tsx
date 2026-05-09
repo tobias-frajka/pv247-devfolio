@@ -7,8 +7,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Link as LinkIcon, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 
-import { z } from 'zod';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,16 +18,14 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { optionalUrl } from '@/schemas/shared';
+import { z } from 'zod';
+import { projectSchema } from '@/schemas/project';
 import { improveDescription } from '@/server-actions/ai';
 import { createProject, deleteProject, updateProject } from '@/server-actions/project';
 
-const projectFormSchema = z.object({
-  title: z.string().trim().min(1, 'Required').max(120),
-  description: z.string().trim().min(1, 'Required').max(2000),
-  techStack: z.array(z.string().trim().min(1).max(40)).max(20),
-  githubUrl: optionalUrl,
-  liveUrl: optionalUrl
+// Strip .default([]) from techStack so the form type has techStack: string[] (not optional)
+const projectFormSchema = projectSchema.extend({
+  techStack: z.array(z.string().trim().min(1).max(40)).max(20)
 });
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
@@ -42,14 +38,6 @@ type Project = {
   liveUrl: string | null;
 };
 
-type SaveData = {
-  title: string;
-  description: string;
-  techStack: string[];
-  githubUrl?: string;
-  liveUrl?: string;
-};
-
 type Props = { projects: Project[] };
 
 function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
@@ -57,7 +45,7 @@ function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]
 
   const add = () => {
     const tag = input.trim();
-    if (tag && !value.includes(tag) && value.length < 20) {
+    if (tag && !value.some(t => t.toLowerCase() === tag.toLowerCase()) && value.length < 20) {
       onChange([...value, tag]);
       setInput('');
     }
@@ -106,7 +94,7 @@ function ProjectDialogForm({
   onCancel
 }: {
   initial: Project | null;
-  onSave: (data: SaveData) => Promise<void>;
+  onSave: (data: ProjectFormValues) => Promise<void>;
   onCancel: () => void;
 }) {
   const [saving, startTransition] = useTransition();
@@ -254,9 +242,13 @@ function ProjectDialogForm({
 
 export function ProjectsClient({ projects }: Props) {
   const router = useRouter();
-  const [pendingDelete, startDeleteTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProject,
+    onSuccess: () => router.refresh()
+  });
 
   const openAdd = () => {
     setEditing(null);
@@ -268,14 +260,7 @@ export function ProjectsClient({ projects }: Props) {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    startDeleteTransition(async () => {
-      await deleteProject(id);
-      router.refresh();
-    });
-  };
-
-  const handleSave = async (data: SaveData) => {
+  const handleSave = async (data: ProjectFormValues) => {
     if (editing) {
       await updateProject(editing.id, data);
     } else {
@@ -361,8 +346,8 @@ export function ProjectsClient({ projects }: Props) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  disabled={pendingDelete}
-                  onClick={() => handleDelete(p.id)}
+                  disabled={deleteMutation.isPending && deleteMutation.variables === p.id}
+                  onClick={() => deleteMutation.mutate(p.id)}
                 >
                   <Trash2 size={14} />
                 </Button>

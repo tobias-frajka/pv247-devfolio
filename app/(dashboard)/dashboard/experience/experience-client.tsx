@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Pencil, Trash2 } from 'lucide-react';
 import { z } from 'zod';
@@ -43,13 +44,26 @@ const formSchema = z
   .refine(v => v.currentlyWorking || !!v.endDate, {
     path: ['endDate'],
     message: 'End date is required'
+  })
+  .refine(v => v.currentlyWorking || !v.endDate || v.endDate >= v.startDate, {
+    path: ['endDate'],
+    message: 'End date must be after start date'
   });
 
 type FormValues = z.infer<typeof formSchema>;
 
 function toDateString(d: Date | null | undefined) {
   if (!d) return '';
-  return new Date(d).toISOString().split('T')[0];
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function fromDateString(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function formatRange(start: Date, end: Date | null) {
@@ -73,7 +87,7 @@ function ExperienceDialogForm({
   }) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [saving, startTransition] = useTransition();
+  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
@@ -96,20 +110,22 @@ function ExperienceDialogForm({
   } = form;
   const currentlyWorking = useWatch({ control, name: 'currentlyWorking' });
 
-  const onSubmit = form.handleSubmit(data => {
-    startTransition(async () => {
-      try {
-        await onSave({
-          company: data.company,
-          role: data.role,
-          startDate: new Date(data.startDate),
-          endDate: data.currentlyWorking ? null : data.endDate ? new Date(data.endDate) : null,
-          description: data.description
-        });
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save');
-      }
-    });
+  const onSubmit = form.handleSubmit(async data => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await onSave({
+        company: data.company,
+        role: data.role,
+        startDate: fromDateString(data.startDate),
+        endDate: data.currentlyWorking ? null : data.endDate ? fromDateString(data.endDate) : null,
+        description: data.description
+      });
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
   });
 
   return (
@@ -162,7 +178,6 @@ function ExperienceDialogForm({
           className="border-input accent-primary h-4 w-4 rounded"
           {...register('currentlyWorking')}
           onChange={e => {
-            setValue('currentlyWorking', e.target.checked);
             if (e.target.checked) setValue('endDate', '');
           }}
         />
@@ -204,9 +219,13 @@ function ExperienceDialogForm({
 
 export function ExperienceClient({ experiences }: Props) {
   const router = useRouter();
-  const [pendingDelete, startDeleteTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteExperience,
+    onSuccess: () => router.refresh()
+  });
 
   const openAdd = () => {
     setEditing(null);
@@ -216,13 +235,6 @@ export function ExperienceClient({ experiences }: Props) {
   const openEdit = (e: Experience) => {
     setEditing(e);
     setDialogOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    startDeleteTransition(async () => {
-      await deleteExperience(id);
-      router.refresh();
-    });
   };
 
   const handleSave = async (data: Parameters<typeof createExperience>[0]) => {
@@ -282,8 +294,8 @@ export function ExperienceClient({ experiences }: Props) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  disabled={pendingDelete}
-                  onClick={() => handleDelete(exp.id)}
+                  disabled={deleteMutation.isPending && deleteMutation.variables === exp.id}
+                  onClick={() => deleteMutation.mutate(exp.id)}
                 >
                   <Trash2 size={14} />
                 </Button>

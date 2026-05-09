@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ type Props = {
 };
 
 export function ProfileForm({ initialProfile, skills }: Props) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -63,8 +65,6 @@ export function ProfileForm({ initialProfile, skills }: Props) {
     formState: { errors }
   } = form;
 
-  const availableForWork = useWatch({ control, name: 'availableForWork' });
-
   const generateBioMutation = useMutation({
     mutationFn: generateBio,
     onSuccess: bio => {
@@ -82,6 +82,7 @@ export function ProfileForm({ initialProfile, skills }: Props) {
     startTransition(async () => {
       try {
         await upsertProfile(data);
+        router.refresh();
         setSaved(true);
         setSaveError(null);
         setTimeout(() => setSaved(false), 2000);
@@ -291,9 +292,12 @@ export function ProfileForm({ initialProfile, skills }: Props) {
               Shows a badge on your public profile
             </p>
           </div>
-          <Switch
-            checked={availableForWork}
-            onCheckedChange={v => setValue('availableForWork', v)}
+          <Controller
+            control={control}
+            name="availableForWork"
+            render={({ field }) => (
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            )}
           />
         </div>
 

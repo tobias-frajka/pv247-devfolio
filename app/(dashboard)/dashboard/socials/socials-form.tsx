@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '@/db/schema/social';
-import { removeSocial, upsertSocial } from '@/server-actions/social';
+import { upsertManySocials } from '@/server-actions/social';
 
 const PLATFORM_META: Record<
   SocialPlatform,
@@ -43,12 +43,19 @@ const PLATFORM_META: Record<
   }
 };
 
+const httpUrl = z.union([
+  z.literal(''),
+  z
+    .url()
+    .refine((u: string) => /^https?:/i.test(u), { message: 'Must be a valid http or https URL' })
+]);
+
 const socialsFormSchema = z.object({
-  github: z.string().optional().or(z.literal('')),
-  linkedin: z.string().optional().or(z.literal('')),
-  x: z.string().optional().or(z.literal('')),
-  website: z.string().optional().or(z.literal('')),
-  email: z.string().optional().or(z.literal(''))
+  github: httpUrl,
+  linkedin: httpUrl,
+  x: httpUrl,
+  website: httpUrl,
+  email: z.union([z.literal(''), z.email()])
 });
 
 type SocialsFormValues = z.infer<typeof socialsFormSchema>;
@@ -77,16 +84,7 @@ export function SocialsForm({ initialSocials }: Props) {
   const onSubmit = form.handleSubmit(data => {
     startTransition(async () => {
       try {
-        await Promise.all(
-          SOCIAL_PLATFORMS.map(async platform => {
-            const url = data[platform] ?? '';
-            if (url) {
-              await upsertSocial({ platform, url });
-            } else if (existing[platform]) {
-              await removeSocial(platform);
-            }
-          })
-        );
+        await upsertManySocials(data as Record<SocialPlatform, string>);
         setSaved(true);
         setSaveError(null);
         setTimeout(() => setSaved(false), 2000);
