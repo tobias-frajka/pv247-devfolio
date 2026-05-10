@@ -155,7 +155,7 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
           <Label htmlFor="username">Username</Label>
           <Input id="username" autoComplete="off" spellCheck={false} {...register('username')} />
           <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
-            3–20 chars, lowercase letters, digits, hyphens. Must start with a letter.
+            3-20 chars, lowercase letters, digits, hyphens. Must start with a letter.
           </p>
           <p className="m-0 text-xs" style={{ color: 'var(--warn)' }}>
             Changing your username breaks any existing links to{' '}
@@ -261,7 +261,6 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
   // autofocus the type-to-confirm input when the dialog opens
   useEffect(() => {
     if (status.kind === 'open') {
-      // defer to next frame so the dialog has mounted
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [status.kind]);
@@ -282,7 +281,6 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
     startTransition(async () => {
       try {
         await deleteAccount();
-        // deleteAccount() calls redirect('/') — control should not return here
       } catch (e) {
         if (e instanceof Error && 'digest' in e && String(e.digest).startsWith('NEXT_')) {
           throw e;

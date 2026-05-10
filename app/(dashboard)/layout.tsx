@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 
 import { CompletenessCard } from '@/components/dashboard/completeness-card';
 import { CompletenessCardSkeleton } from '@/components/dashboard/completeness-card-skeleton';
+import { LinkCheckCard } from '@/components/dashboard/link-check/link-check-card';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { requireUsername } from '@/lib/dal';
@@ -56,12 +57,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Suspense fallback={<CompletenessCardSkeleton />}>
             <CompletenessCard userId={session.user.id} username={session.user.username} />
           </Suspense>
-          <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
-            <div className="eyebrow mb-2">link checker</div>
-            <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-              Wires to <code>checkLinks</code> via Tanstack Query.
-            </p>
-          </div>
+          <LinkCheckCard />
         </div>
       </aside>
     </div>

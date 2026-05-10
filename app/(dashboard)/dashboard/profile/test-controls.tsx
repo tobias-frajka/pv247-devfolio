@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { type SkillCategory, SKILL_CATEGORIES } from '@/db/schema/skill';
 import { type SocialPlatform, SOCIAL_PLATFORMS } from '@/db/schema/social';
 import { generateBio, improveDescription, suggestTitles } from '@/server-actions/ai';
-import { checkLinks, type LinkResult } from '@/server-actions/links';
 import { upsertProfile } from '@/server-actions/profile';
 import { createProject, deleteProject } from '@/server-actions/project';
 import { addSkill, removeSkill } from '@/server-actions/skill';
@@ -41,7 +40,6 @@ export function TestControls({ profile, projects, skills, socials }: Props) {
       <ProjectSection projects={projects} />
       <SkillSection skills={skills} />
       <SocialSection socials={socials} />
-      <LinkCheckSection />
     </div>
   );
 }
@@ -157,7 +155,11 @@ function AiSection({ skills }: { skills: Props['skills'] }) {
           disabled={pending}
           onClick={() =>
             run('generateBio', () =>
-              generateBio({ role, yearsExperience: years, topSkills: skills.map(s => s.name).slice(0, 3) })
+              generateBio({
+                role,
+                yearsExperience: years,
+                topSkills: skills.map(s => s.name).slice(0, 3)
+              })
             )
           }
         >
@@ -239,7 +241,10 @@ function ProjectSection({ projects }: { projects: Props['projects'] }) {
         const row = await createProject({
           title,
           description,
-          techStack: techStack.split(',').map(s => s.trim()).filter(Boolean),
+          techStack: techStack
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean),
           githubUrl: '',
           liveUrl: ''
         });
@@ -462,56 +467,6 @@ function SocialSection({ socials }: { socials: Props['socials'] }) {
           </ul>
         )}
         {result && <pre className={outputClass}>{result}</pre>}
-      </div>
-    </section>
-  );
-}
-
-function LinkCheckSection() {
-  const [pending, startTransition] = useTransition();
-  const [results, setResults] = useState<LinkResult[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const onCheck = () =>
-    startTransition(async () => {
-      setError(null);
-      try {
-        const out = await checkLinks();
-        setResults(out);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    });
-
-  return (
-    <section className={sectionStyle}>
-      <div className="eyebrow mb-3">link checker</div>
-      <div className="flex flex-col gap-2">
-        <Button type="button" disabled={pending} onClick={onCheck}>
-          {pending ? 'Checking…' : 'checkLinks'}
-        </Button>
-        {error && (
-          <p className="m-0" style={{ ...labelStyle, color: 'var(--danger)' }}>
-            {error}
-          </p>
-        )}
-        {results && results.length === 0 && (
-          <p className="m-0" style={labelStyle}>
-            (no urls to check — add a project with a github url first)
-          </p>
-        )}
-        {results && results.length > 0 && (
-          <ul className="m-0 list-none p-0 font-mono" style={{ fontSize: 'var(--t-sm)' }}>
-            {results.map(r => (
-              <li key={`${r.source}-${r.url}`} className="py-1">
-                <span style={{ color: 'var(--ink-3)' }}>[{r.status}]</span> {r.label} —{' '}
-                <a className="underline" href={r.url} target="_blank" rel="noreferrer">
-                  {r.url}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </section>
   );

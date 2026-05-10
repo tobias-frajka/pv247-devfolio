@@ -303,7 +303,7 @@ export function ProfileForm({
               <Input id="location" placeholder="Prague, CZ" {...register('location')} />
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div id="avatar" className="flex scroll-mt-6 flex-col gap-1.5">
               <Label htmlFor="avatarUrl">Avatar URL</Label>
               <Input
                 id="avatarUrl"

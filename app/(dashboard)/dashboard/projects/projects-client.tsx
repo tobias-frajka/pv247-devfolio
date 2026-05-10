@@ -329,7 +329,8 @@ export function ProjectsClient({
             {projects.map(p => (
               <li
                 key={p.id}
-                className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+                id={`project-${p.id}`}
+                className="flex scroll-mt-6 items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
               >
                 <div className="flex min-w-0 flex-col gap-2">
                   <p className="m-0 text-sm font-medium">{p.title}</p>
