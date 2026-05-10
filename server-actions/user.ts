@@ -1,17 +1,18 @@
 'use server';
 
+import { sql, isNotNull, and } from 'drizzle-orm';
+
 import { db } from '@/db';
+import { profile, user } from '@/db/schema';
 
 export async function getRandomUser(): Promise<string | null> {
-  // Get all users (or we could limit to active ones)
-  const users = await db.query.user.findMany();
+  const result = await db
+    .select({ username: user.username })
+    .from(user)
+    .innerJoin(profile, and(sql`${user.id} = ${profile.userId}`, isNotNull(profile.headline)))
+    .where(isNotNull(user.username))
+    .orderBy(sql`RANDOM()`)
+    .limit(1);
 
-  if (users.length === 0) {
-    return null;
-  }
-
-  // Select a random user
-  const randomUser = users[Math.floor(Math.random() * users.length)];
-
-  return randomUser.username;
+  return result[0]?.username ?? null;
 }

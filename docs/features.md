@@ -225,3 +225,59 @@ The page shows a single input and a submit button. Validation:
 Username validation runs in the Zod schema (client) and again in the server action (server). The server action also checks uniqueness — client-side we could show a live "available / taken" indicator via a separate server action, but that's polish; the submit-and-fail path is fine for v1.
 
 On success, the action updates the user row, revalidates the relevant paths, and redirects to `/dashboard/profile`.
+
+---
+
+## Developer discovery — `/developers`
+
+A searchable, filterable, sortable table for unregistered users to find developers and view their portfolios.
+
+**Layout:**
+
+1. **Search bar** — filters by name, headline, or bio (case-insensitive substring match)
+2. **Filter controls:**
+   - Minimum years of experience (0-50 range input)
+   - Minimum project count (0-100 range input)
+   - "Available for work" toggle
+   - Sort dropdown: Name, Experience, Projects, Availability
+   - Ascending / Descending toggle
+3. **Results table** — each row shows:
+   - Profile picture (rounded avatar)
+   - Name (clickable link to `/[username]`)
+   - Headline (single line, truncated)
+   - Location (right-aligned, hidden on small screens)
+   - Years of experience (calculated from earliest job start date)
+   - Project count
+   - "Available" badge (if toggled on)
+
+All columns are sortable. Filtering and sorting happen client-side on the initially loaded data. Hovering a row highlights it.
+
+**At the bottom:** Call-to-action section with "Want to join? Build your portfolio" and a button linking to `/login` (for unregistered users) or `/dashboard/profile` (for logged-in users).
+
+**Data requirements:**
+
+- Only show developers with a username (have claimed their handle)
+- Only show developers with at least a headline (filters out empty profiles)
+- Calculate years of experience from the earliest `experience.startDate` to now, rounded down
+- Featured Developers section on landing page shows same users (6 limit) — uses the same filtering rules
+
+---
+
+## "See an example" button
+
+On the landing page, a button that fetches a random developer (filtered for username + non-null headline) and navigates to their profile.
+
+Implementation: server action `getRandomUser()` that pulls one random row from the database using `ORDER BY RANDOM() LIMIT 1`. Filters for users with a claimed username and a non-null headline to ensure the example page is reasonably filled out.
+
+Button shows "Loading..." while fetching. Does nothing if the database is empty (edge case, fine to ignore).
+
+---
+
+## Featured Developers on landing page
+
+The landing page includes a "Featured Developers" grid (3 columns on desktop, 1 on mobile) showing 6 random developers with their avatar, name (linked), headline, and latest company.
+
+- Fetched server-side with a single optimized query: `user.findMany({ limit: 6, with: { profile, experiences: { limit: 1 } } })`
+- Filters for `isNotNull(username)` and `isNotNull(profile.headline)` to ensure valid, filled-out profiles
+- Wrapped in `<Suspense>` so the hero renders first and the grid loads in parallel
+- Images use Next.js `Image` component for optimization

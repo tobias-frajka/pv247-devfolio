@@ -1,7 +1,9 @@
+import Link from 'next/link';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { Button } from '@/components/ui/button';
 import { PublicProfile } from '@/components/public-profile/public-profile';
 import { db } from '@/db';
 import { experience, profile, project, skill, social, user } from '@/db/schema';
@@ -125,5 +127,16 @@ export default async function PublicProfilePage({
     socials: socials.map(s => ({ platform: s.platform, url: s.url }))
   };
 
-  return <PublicProfile data={data} />;
+  return (
+    <>
+      <div className="bg-background px-6 py-10 md:px-10">
+        <div className="mx-auto max-w-[880px]">
+          <Button variant="ghost" size="sm" asChild className="mb-6">
+            <Link href="/">← Back to home</Link>
+          </Button>
+        </div>
+      </div>
+      <PublicProfile data={data} />
+    </>
+  );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -64,11 +65,16 @@ export default function LandingPage() {
             </span>
             . No CSS. No hosting. No Friday-night templates.
           </p>
-          <div className="mt-7 flex justify-center gap-2.5">
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2.5">
             <Button size="lg" asChild>
               <Link href="/login">Sign in with GitHub →</Link>
             </Button>
+            {/*<span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>*/}
             <ExampleButton />
+            <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/developers">Search developers</Link>
+            </Button>
           </div>
           <div
             className="mt-7 flex justify-center gap-6 font-mono"
@@ -97,7 +103,9 @@ export default function LandingPage() {
           ))}
         </section>
 
-        <UsersShowcase />
+        <Suspense fallback={null}>
+          <UsersShowcase />
+        </Suspense>
 
         <footer
           className="mt-16 text-center font-mono"

@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react';
 import type { ProfileData } from '@/types/profile-data';
 
 type Props = Pick<
@@ -49,9 +50,13 @@ export function HeroSection({
         )}
 
         {location && (
-          <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}>
-            📍 {location}
-          </p>
+          <div
+            className="flex items-center justify-center gap-2"
+            style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}
+          >
+            <MapPin size={16} />
+            <p className="m-0">{location}</p>
+          </div>
         )}
       </div>
 

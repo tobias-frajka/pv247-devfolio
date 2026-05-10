@@ -1,7 +1,5 @@
-import Link from 'next/link';
 import type { ProfileData } from '@/types/profile-data';
 
-import { Button } from '@/components/ui/button';
 import { ExperienceSection } from './experience-section';
 import { HeroSection } from './hero-section';
 import { ProjectsSection } from './projects-section';
@@ -11,11 +9,6 @@ import { SocialsSection } from './socials-section';
 export function PublicProfile({ data }: { data: ProfileData }) {
   return (
     <div className="bg-background min-h-full px-6 py-10 md:px-10">
-      <div className="mx-auto max-w-[880px]">
-        <Button variant="ghost" size="sm" asChild className="mb-6">
-          <Link href="/">← Back to home</Link>
-        </Button>
-      </div>
       <div className="mx-auto flex max-w-[880px] flex-col gap-12">
         <HeroSection
           displayName={data.displayName}
