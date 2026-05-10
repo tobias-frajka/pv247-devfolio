@@ -1,6 +1,9 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
+import { UsersShowcase } from '@/components/users-showcase';
+import { ExampleButton } from '@/components/example-button';
 
 const features = [
   {
@@ -34,7 +37,7 @@ export default function LandingPage() {
               <a href="#">Docs</a>
             </Button>
             <Button variant="secondary" size="sm" asChild>
-              <a href="/login">Sign in</a>
+              <Link href="/login">Sign in</Link>
             </Button>
           </div>
         </nav>
@@ -63,11 +66,9 @@ export default function LandingPage() {
           </p>
           <div className="mt-7 flex justify-center gap-2.5">
             <Button size="lg" asChild>
-              <a href="/login">Sign in with GitHub →</a>
+              <Link href="/login">Sign in with GitHub →</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
-              <a href="#">See an example</a>
-            </Button>
+            <ExampleButton />
           </div>
           <div
             className="mt-7 flex justify-center gap-6 font-mono"
@@ -95,6 +96,8 @@ export default function LandingPage() {
             </Card>
           ))}
         </section>
+
+        <UsersShowcase />
 
         <footer
           className="mt-16 text-center font-mono"
