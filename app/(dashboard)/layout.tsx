@@ -1,5 +1,8 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 
+import { CompletenessCard } from '@/components/dashboard/completeness-card';
+import { CompletenessCardSkeleton } from '@/components/dashboard/completeness-card-skeleton';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { requireUsername } from '@/lib/dal';
@@ -50,15 +53,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <aside className="hidden border-l border-[var(--hairline)] bg-[var(--paper)] px-5 py-6 xl:block">
         <div className="flex flex-col gap-5">
-          <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
-            <div className="eyebrow mb-2">portfolio score</div>
-            <div className="font-mono" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}>
-              — / 100
-            </div>
-            <p className="m-0 mt-2" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-              Computed in the SSR track.
-            </p>
-          </div>
+          <Suspense fallback={<CompletenessCardSkeleton />}>
+            <CompletenessCard userId={session.user.id} username={session.user.username} />
+          </Suspense>
           <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
             <div className="eyebrow mb-2">link checker</div>
             <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
