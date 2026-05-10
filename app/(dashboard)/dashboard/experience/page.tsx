@@ -1,18 +1,28 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '@/db';
-import { experience } from '@/db/schema';
+import { experience, profile, project, skill, social } from '@/db/schema';
 import { requireUsername } from '@/lib/dal';
 
 import { ExperienceClient } from './experience-client';
 
 export default async function ExperiencePage() {
   const session = await requireUsername();
+  const userId = session.user.id;
 
-  const experiences = await db.query.experience.findMany({
-    where: eq(experience.userId, session.user.id),
-    orderBy: (e, { desc }) => [desc(e.startDate)]
-  });
+  const [experiences, currentProfile, projects, skills, socials] = await Promise.all([
+    db.query.experience.findMany({
+      where: eq(experience.userId, userId),
+      orderBy: (e, { desc }) => [desc(e.startDate)]
+    }),
+    db.query.profile.findFirst({ where: eq(profile.userId, userId) }),
+    db.query.project.findMany({
+      where: eq(project.userId, userId),
+      orderBy: (p, { asc }) => [asc(p.sortOrder), asc(p.createdAt)]
+    }),
+    db.query.skill.findMany({ where: eq(skill.userId, userId) }),
+    db.query.social.findMany({ where: eq(social.userId, userId) })
+  ]);
 
   return (
     <ExperienceClient
@@ -24,6 +34,31 @@ export default async function ExperiencePage() {
         endDate: e.endDate ?? null,
         description: e.description ?? null
       }))}
+      username={session.user.username}
+      fallbackName={session.user.name}
+      fallbackAvatar={session.user.image ?? null}
+      previewSeed={{
+        profile: currentProfile
+          ? {
+              displayName: currentProfile.displayName,
+              headline: currentProfile.headline,
+              bio: currentProfile.bio,
+              location: currentProfile.location,
+              avatarUrl: currentProfile.avatarUrl,
+              availableForWork: currentProfile.availableForWork
+            }
+          : null,
+        projects: projects.map(p => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          techStack: p.techStack ?? [],
+          githubUrl: p.githubUrl ?? null,
+          liveUrl: p.liveUrl ?? null
+        })),
+        skills: skills.map(s => ({ id: s.id, name: s.name, category: s.category })),
+        socials: socials.map(s => ({ platform: s.platform, url: s.url }))
+      }}
     />
   );
 }

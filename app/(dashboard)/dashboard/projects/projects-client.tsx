@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { Link as LinkIcon, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 
+import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
+import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +25,7 @@ import {
 import { projectSchema } from '@/schemas/project';
 import { improveDescription } from '@/server-actions/ai';
 import { createProject, deleteProject, updateProject } from '@/server-actions/project';
+import type { ProfileData } from '@/types/profile-data';
 
 // Strip .default([]) from techStack so the form type has techStack: string[] (not optional)
 const projectFormSchema = projectSchema.extend({
@@ -39,7 +42,27 @@ type Project = {
   liveUrl: string | null;
 };
 
-type Props = { projects: Project[] };
+type PreviewSeed = {
+  profile: {
+    displayName: string | null;
+    headline: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    availableForWork: boolean;
+  } | null;
+  experiences: ProfileData['experiences'];
+  skills: ProfileData['skills'];
+  socials: ProfileData['socials'];
+};
+
+type Props = {
+  projects: Project[];
+  username: string;
+  fallbackName: string;
+  fallbackAvatar: string | null;
+  previewSeed: PreviewSeed;
+};
 
 function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const [input, setInput] = useState('');
@@ -206,10 +229,31 @@ function ProjectDialogForm({
   );
 }
 
-export function ProjectsClient({ projects }: Props) {
+export function ProjectsClient({
+  projects,
+  username,
+  fallbackName,
+  fallbackAvatar,
+  previewSeed
+}: Props) {
   const router = useRouter();
+  const [mode, setMode] = useState<PreviewMode>('edit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
+
+  const previewData: ProfileData = {
+    username,
+    displayName: previewSeed.profile?.displayName?.trim() || fallbackName || username,
+    headline: previewSeed.profile?.headline ?? '',
+    bio: previewSeed.profile?.bio ?? '',
+    location: previewSeed.profile?.location ?? '',
+    avatarUrl: previewSeed.profile?.avatarUrl?.trim() || fallbackAvatar || null,
+    availableForWork: previewSeed.profile?.availableForWork ?? false,
+    projects,
+    experiences: previewSeed.experiences,
+    skills: previewSeed.skills,
+    socials: previewSeed.socials
+  };
 
   const deleteMutation = useMutation({
     mutationFn: deleteProject,
@@ -262,82 +306,93 @@ export function ProjectsClient({ projects }: Props) {
         >
           Projects
         </h1>
-        <Button onClick={openAdd}>Add project</Button>
+        <div className="flex gap-2">
+          <PreviewToggle mode={mode} onChange={setMode} />
+          {mode === 'edit' && (
+            <Button size="sm" onClick={openAdd}>
+              Add project
+            </Button>
+          )}
+        </div>
       </div>
 
-      {projects.length === 0 ? (
-        <div
-          className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
-          style={{ color: 'var(--ink-3)' }}
-        >
-          <p className="m-0 text-sm">No projects yet. Add your first one.</p>
-        </div>
-      ) : (
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {projects.map(p => (
-            <li
-              key={p.id}
-              className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
-            >
-              <div className="flex min-w-0 flex-col gap-2">
-                <p className="m-0 text-sm font-medium">{p.title}</p>
-                <p className="m-0 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
-                  {p.description}
-                </p>
-                {p.techStack.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {p.techStack.map(tag => (
-                      <span
-                        key={tag}
-                        className="rounded bg-[var(--paper-3)] px-2 py-0.5 text-xs"
-                        style={{ color: 'var(--ink-2)' }}
+      {mode === 'edit' ? (
+        projects.length === 0 ? (
+          <div
+            className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
+            style={{ color: 'var(--ink-3)' }}
+          >
+            <p className="m-0 text-sm">No projects yet. Add your first one.</p>
+          </div>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {projects.map(p => (
+              <li
+                key={p.id}
+                className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+              >
+                <div className="flex min-w-0 flex-col gap-2">
+                  <p className="m-0 text-sm font-medium">{p.title}</p>
+                  <p className="m-0 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
+                    {p.description}
+                  </p>
+                  {p.techStack.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {p.techStack.map(tag => (
+                        <span
+                          key={tag}
+                          className="rounded bg-[var(--paper-3)] px-2 py-0.5 text-xs"
+                          style={{ color: 'var(--ink-2)' }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    {p.githubUrl && (
+                      <a
+                        href={p.githubUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-xs hover:underline"
+                        style={{ color: 'var(--ink-3)' }}
                       >
-                        {tag}
-                      </span>
-                    ))}
+                        <LinkIcon size={12} /> GitHub
+                      </a>
+                    )}
+                    {p.liveUrl && (
+                      <a
+                        href={p.liveUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-xs hover:underline"
+                        style={{ color: 'var(--ink-3)' }}
+                      >
+                        <ExternalLink size={12} /> Live
+                      </a>
+                    )}
                   </div>
-                )}
-                <div className="flex gap-3">
-                  {p.githubUrl && (
-                    <a
-                      href={p.githubUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1 text-xs hover:underline"
-                      style={{ color: 'var(--ink-3)' }}
-                    >
-                      <LinkIcon size={12} /> GitHub
-                    </a>
-                  )}
-                  {p.liveUrl && (
-                    <a
-                      href={p.liveUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1 text-xs hover:underline"
-                      style={{ color: 'var(--ink-3)' }}
-                    >
-                      <ExternalLink size={12} /> Live
-                    </a>
-                  )}
                 </div>
-              </div>
-              <div className="flex shrink-0 gap-1">
-                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(p)}>
-                  <Pencil size={14} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={deleteMutation.isPending && deleteMutation.variables === p.id}
-                  onClick={() => deleteMutation.mutate(p.id)}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="flex shrink-0 gap-1">
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(p)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={deleteMutation.isPending && deleteMutation.variables === p.id}
+                    onClick={() => deleteMutation.mutate(p.id)}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <PublicProfile data={previewData} />
       )}
 
       <DialogRoot open={dialogOpen} onOpenChange={handleDialogOpenChange}>

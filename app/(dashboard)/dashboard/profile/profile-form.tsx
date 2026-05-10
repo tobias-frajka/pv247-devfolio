@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
+import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
+import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +25,7 @@ import type { SkillCategory } from '@/db/schema/skill';
 import { profileSchema, type ProfileInput } from '@/schemas/profile';
 import { generateBio, suggestTitles } from '@/server-actions/ai';
 import { upsertProfile } from '@/server-actions/profile';
+import type { ProfileData } from '@/types/profile-data';
 
 type Props = {
   initialProfile: {
@@ -33,11 +36,28 @@ type Props = {
     avatarUrl: string | null;
     availableForWork: boolean;
   } | null;
+  username: string;
+  fallbackName: string;
+  fallbackAvatar: string | null;
   skills: { name: string; category: SkillCategory }[];
+  otherSections: {
+    projects: ProfileData['projects'];
+    experiences: ProfileData['experiences'];
+    skills: ProfileData['skills'];
+    socials: ProfileData['socials'];
+  };
 };
 
-export function ProfileForm({ initialProfile, skills }: Props) {
+export function ProfileForm({
+  initialProfile,
+  username,
+  fallbackName,
+  fallbackAvatar,
+  skills,
+  otherSections
+}: Props) {
   const router = useRouter();
+  const [mode, setMode] = useState<PreviewMode>('edit');
   const [saved, setSaved] = useState(false);
   const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
@@ -63,6 +83,22 @@ export function ProfileForm({ initialProfile, skills }: Props) {
     control,
     formState: { errors }
   } = form;
+
+  const watched = useWatch({ control });
+
+  const previewData: ProfileData = {
+    username,
+    displayName: watched.displayName?.trim() || fallbackName || username,
+    headline: watched.headline ?? '',
+    bio: watched.bio ?? '',
+    location: watched.location ?? '',
+    avatarUrl: watched.avatarUrl?.trim() || fallbackAvatar || null,
+    availableForWork: watched.availableForWork ?? false,
+    projects: otherSections.projects,
+    experiences: otherSections.experiences,
+    skills: otherSections.skills,
+    socials: otherSections.socials
+  };
 
   const saveMutation = useMutation({
     mutationFn: upsertProfile,
@@ -162,133 +198,154 @@ export function ProfileForm({ initialProfile, skills }: Props) {
         </DialogContent>
       </DialogRoot>
 
-      <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-6">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="displayName">Display name</Label>
-          <Input id="displayName" placeholder="Jane Smith" {...register('displayName')} />
-          <FormError>{errors.displayName?.message}</FormError>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="headline">Headline</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={handleSuggestTitles}
-              disabled={suggestTitlesMutation.isPending || !skills.length}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h1
+              className="m-0"
+              style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
             >
-              {suggestTitlesMutation.isPending ? 'Thinking…' : 'Suggest titles'}
-            </Button>
+              Profile
+            </h1>
+            <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+              This shows on your public page at <span className="font-mono">/{username}</span>
+            </p>
           </div>
-          {suggestedTitles.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {suggestedTitles.map(title => (
-                <button
-                  key={title}
+          <PreviewToggle mode={mode} onChange={setMode} />
+        </div>
+
+        {mode === 'edit' ? (
+          <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-6">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="displayName">Display name</Label>
+              <Input id="displayName" placeholder="Jane Smith" {...register('displayName')} />
+              <FormError>{errors.displayName?.message}</FormError>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="headline">Headline</Label>
+                <Button
                   type="button"
-                  className="rounded-md border border-[var(--hairline)] bg-[var(--paper-2)] px-2 py-0.5 text-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)]"
-                  onClick={() => {
-                    setValue('headline', title);
-                    setSuggestedTitles([]);
-                  }}
+                  variant="ghost"
+                  size="xs"
+                  onClick={handleSuggestTitles}
+                  disabled={suggestTitlesMutation.isPending || !skills.length}
                 >
-                  {title}
-                </button>
-              ))}
+                  {suggestTitlesMutation.isPending ? 'Thinking…' : 'Suggest titles'}
+                </Button>
+              </div>
+              {suggestedTitles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestedTitles.map(title => (
+                    <button
+                      key={title}
+                      type="button"
+                      className="rounded-md border border-[var(--hairline)] bg-[var(--paper-2)] px-2 py-0.5 text-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)]"
+                      onClick={() => {
+                        setValue('headline', title);
+                        setSuggestedTitles([]);
+                      }}
+                    >
+                      {title}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Input id="headline" placeholder="Full-stack Developer" {...register('headline')} />
+              <FormError>{errors.headline?.message}</FormError>
             </div>
-          )}
-          <Input id="headline" placeholder="Full-stack Developer" {...register('headline')} />
-          <FormError>{errors.headline?.message}</FormError>
-        </div>
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="bio">Bio</Label>
-            <div className="flex gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={handleImproveBio}
-                disabled={generateBioMutation.isPending}
-              >
-                Improve with AI
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={handleOpenGenerateBio}
-                disabled={generateBioMutation.isPending}
-              >
-                Generate from scratch
-              </Button>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="bio">Bio</Label>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={handleImproveBio}
+                    disabled={generateBioMutation.isPending}
+                  >
+                    Improve with AI
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={handleOpenGenerateBio}
+                    disabled={generateBioMutation.isPending}
+                  >
+                    Generate from scratch
+                  </Button>
+                </div>
+              </div>
+              <Textarea
+                id="bio"
+                rows={5}
+                placeholder="A short bio about yourself…"
+                className={generateBioMutation.isPending ? 'opacity-60' : ''}
+                {...register('bio')}
+              />
+              {generateBioMutation.isPending && (
+                <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                  Generating…
+                </p>
+              )}
+              {generateBioMutation.isError && (
+                <FormError>AI unavailable — try again in a moment</FormError>
+              )}
+              <FormError>{errors.bio?.message}</FormError>
             </div>
-          </div>
-          <Textarea
-            id="bio"
-            rows={5}
-            placeholder="A short bio about yourself…"
-            className={generateBioMutation.isPending ? 'opacity-60' : ''}
-            {...register('bio')}
-          />
-          {generateBioMutation.isPending && (
-            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
-              Generating…
-            </p>
-          )}
-          {generateBioMutation.isError && (
-            <FormError>AI unavailable — try again in a moment</FormError>
-          )}
-          <FormError>{errors.bio?.message}</FormError>
-        </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="location">Location</Label>
-          <Input id="location" placeholder="Prague, CZ" {...register('location')} />
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" placeholder="Prague, CZ" {...register('location')} />
+            </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="avatarUrl">Avatar URL</Label>
-          <Input
-            id="avatarUrl"
-            type="url"
-            placeholder="https://github.com/you.png"
-            {...register('avatarUrl')}
-          />
-          <FormError>{errors.avatarUrl?.message}</FormError>
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
+              <Input
+                id="avatarUrl"
+                type="url"
+                placeholder="https://github.com/you.png"
+                {...register('avatarUrl')}
+              />
+              <FormError>{errors.avatarUrl?.message}</FormError>
+            </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] px-4 py-3">
-          <div>
-            <p className="m-0 text-sm font-medium">Available for work</p>
-            <p className="m-0 text-xs" style={{ color: 'var(--ink-2)' }}>
-              Shows a badge on your public profile
-            </p>
-          </div>
-          <Controller
-            control={control}
-            name="availableForWork"
-            render={({ field }) => (
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            )}
-          />
-        </div>
+            <div className="flex items-center justify-between rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] px-4 py-3">
+              <div>
+                <p className="m-0 text-sm font-medium">Available for work</p>
+                <p className="m-0 text-xs" style={{ color: 'var(--ink-2)' }}>
+                  Shows a badge on your public profile
+                </p>
+              </div>
+              <Controller
+                control={control}
+                name="availableForWork"
+                render={({ field }) => (
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving…' : 'Save profile'}
-          </Button>
-          {saved && (
-            <span className="text-sm" style={{ color: 'var(--ok)' }}>
-              Saved
-            </span>
-          )}
-          <FormError className="text-sm">{saveMutation.error?.message}</FormError>
-        </div>
-      </form>
+            <div className="flex items-center gap-3">
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? 'Saving…' : 'Save profile'}
+              </Button>
+              {saved && (
+                <span className="text-sm" style={{ color: 'var(--ok)' }}>
+                  Saved
+                </span>
+              )}
+              <FormError className="text-sm">{saveMutation.error?.message}</FormError>
+            </div>
+          </form>
+        ) : (
+          <PublicProfile data={previewData} />
+        )}
+      </div>
     </>
   );
 }

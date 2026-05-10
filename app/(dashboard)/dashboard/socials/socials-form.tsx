@@ -1,18 +1,21 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { Link as LinkIcon, Briefcase, Globe, Mail, AtSign } from 'lucide-react';
 
+import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
+import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormError } from '@/components/ui/form-error';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '@/db/schema/social';
 import { upsertManySocials } from '@/server-actions/social';
+import type { ProfileData } from '@/types/profile-data';
 
 const PLATFORM_META: Record<
   SocialPlatform,
@@ -62,11 +65,36 @@ const socialsFormSchema = z.object({
 
 type SocialsFormValues = z.infer<typeof socialsFormSchema>;
 
-type Props = {
-  initialSocials: { platform: SocialPlatform; url: string }[];
+type PreviewSeed = {
+  profile: {
+    displayName: string | null;
+    headline: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    availableForWork: boolean;
+  } | null;
+  projects: ProfileData['projects'];
+  experiences: ProfileData['experiences'];
+  skills: ProfileData['skills'];
 };
 
-export function SocialsForm({ initialSocials }: Props) {
+type Props = {
+  initialSocials: { platform: SocialPlatform; url: string }[];
+  username: string;
+  fallbackName: string;
+  fallbackAvatar: string | null;
+  previewSeed: PreviewSeed;
+};
+
+export function SocialsForm({
+  initialSocials,
+  username,
+  fallbackName,
+  fallbackAvatar,
+  previewSeed
+}: Props) {
+  const [mode, setMode] = useState<PreviewMode>('edit');
   const [saved, setSaved] = useState(false);
 
   const existing = useMemo(
@@ -81,8 +109,30 @@ export function SocialsForm({ initialSocials }: Props) {
 
   const {
     register,
+    control,
     formState: { errors }
   } = form;
+
+  const watched = useWatch({ control });
+
+  const previewSocials: ProfileData['socials'] = SOCIAL_PLATFORMS.map(platform => ({
+    platform,
+    url: (watched[platform] ?? '').trim()
+  })).filter(s => s.url.length > 0);
+
+  const previewData: ProfileData = {
+    username,
+    displayName: previewSeed.profile?.displayName?.trim() || fallbackName || username,
+    headline: previewSeed.profile?.headline ?? '',
+    bio: previewSeed.profile?.bio ?? '',
+    location: previewSeed.profile?.location ?? '',
+    avatarUrl: previewSeed.profile?.avatarUrl?.trim() || fallbackAvatar || null,
+    availableForWork: previewSeed.profile?.availableForWork ?? false,
+    projects: previewSeed.projects,
+    experiences: previewSeed.experiences,
+    skills: previewSeed.skills,
+    socials: previewSocials
+  };
 
   const saveMutation = useMutation({
     mutationFn: (data: SocialsFormValues) =>
@@ -97,51 +147,58 @@ export function SocialsForm({ initialSocials }: Props) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <h1
-          className="m-0"
-          style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-        >
-          Socials
-        </h1>
-        <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-          Leave blank to hide a platform. Changes apply to your public profile.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h1
+            className="m-0"
+            style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
+          >
+            Socials
+          </h1>
+          <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+            Leave blank to hide a platform. Changes apply to your public profile.
+          </p>
+        </div>
+        <PreviewToggle mode={mode} onChange={setMode} />
       </div>
 
-      <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-5">
-        {SOCIAL_PLATFORMS.map(platform => {
-          const meta = PLATFORM_META[platform];
-          const error = errors[platform];
-          return (
-            <div key={platform} className="flex flex-col gap-1.5">
-              <Label htmlFor={`social-${platform}`} className="flex items-center gap-2">
-                <span className="text-[var(--ink-3)]">{meta.icon}</span>
-                {meta.label}
-              </Label>
-              <Input
-                id={`social-${platform}`}
-                type={platform === 'email' ? 'email' : 'url'}
-                placeholder={meta.placeholder}
-                {...register(platform)}
-              />
-              <FormError>{error?.message}</FormError>
-            </div>
-          );
-        })}
+      {mode === 'preview' ? (
+        <PublicProfile data={previewData} />
+      ) : (
+        <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-5">
+          {SOCIAL_PLATFORMS.map(platform => {
+            const meta = PLATFORM_META[platform];
+            const error = errors[platform];
+            return (
+              <div key={platform} className="flex flex-col gap-1.5">
+                <Label htmlFor={`social-${platform}`} className="flex items-center gap-2">
+                  <span className="text-[var(--ink-3)]">{meta.icon}</span>
+                  {meta.label}
+                </Label>
+                <Input
+                  id={`social-${platform}`}
+                  type={platform === 'email' ? 'email' : 'url'}
+                  placeholder={meta.placeholder}
+                  {...register(platform)}
+                />
+                <FormError>{error?.message}</FormError>
+              </div>
+            );
+          })}
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving…' : 'Save socials'}
-          </Button>
-          {saved && (
-            <span className="text-sm" style={{ color: 'var(--ok)' }}>
-              Saved
-            </span>
-          )}
-          <FormError className="text-sm">{saveMutation.error?.message}</FormError>
-        </div>
-      </form>
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? 'Saving…' : 'Save socials'}
+            </Button>
+            {saved && (
+              <span className="text-sm" style={{ color: 'var(--ok)' }}>
+                Saved
+              </span>
+            )}
+            <FormError className="text-sm">{saveMutation.error?.message}</FormError>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

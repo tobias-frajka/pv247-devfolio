@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { Pencil, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 
+import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
+import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +23,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { createExperience, deleteExperience, updateExperience } from '@/server-actions/experience';
+import type { ProfileData } from '@/types/profile-data';
 
 type Experience = {
   id: string;
@@ -39,7 +42,27 @@ type SaveData = {
   description?: string;
 };
 
-type Props = { experiences: Experience[] };
+type PreviewSeed = {
+  profile: {
+    displayName: string | null;
+    headline: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    availableForWork: boolean;
+  } | null;
+  projects: ProfileData['projects'];
+  skills: ProfileData['skills'];
+  socials: ProfileData['socials'];
+};
+
+type Props = {
+  experiences: Experience[];
+  username: string;
+  fallbackName: string;
+  fallbackAvatar: string | null;
+  previewSeed: PreviewSeed;
+};
 
 const formSchema = z
   .object({
@@ -191,10 +214,31 @@ function ExperienceDialogForm({
   );
 }
 
-export function ExperienceClient({ experiences }: Props) {
+export function ExperienceClient({
+  experiences,
+  username,
+  fallbackName,
+  fallbackAvatar,
+  previewSeed
+}: Props) {
   const router = useRouter();
+  const [mode, setMode] = useState<PreviewMode>('edit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
+
+  const previewData: ProfileData = {
+    username,
+    displayName: previewSeed.profile?.displayName?.trim() || fallbackName || username,
+    headline: previewSeed.profile?.headline ?? '',
+    bio: previewSeed.profile?.bio ?? '',
+    location: previewSeed.profile?.location ?? '',
+    avatarUrl: previewSeed.profile?.avatarUrl?.trim() || fallbackAvatar || null,
+    availableForWork: previewSeed.profile?.availableForWork ?? false,
+    projects: previewSeed.projects,
+    experiences,
+    skills: previewSeed.skills,
+    socials: previewSeed.socials
+  };
 
   const deleteMutation = useMutation({
     mutationFn: deleteExperience,
@@ -241,53 +285,64 @@ export function ExperienceClient({ experiences }: Props) {
         >
           Experience
         </h1>
-        <Button onClick={openAdd}>Add experience</Button>
+        <div className="flex gap-2">
+          <PreviewToggle mode={mode} onChange={setMode} />
+          {mode === 'edit' && (
+            <Button size="sm" onClick={openAdd}>
+              Add experience
+            </Button>
+          )}
+        </div>
       </div>
 
-      {experiences.length === 0 ? (
-        <div
-          className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
-          style={{ color: 'var(--ink-3)' }}
-        >
-          <p className="m-0 text-sm">No experience yet. Add your first role.</p>
-        </div>
-      ) : (
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {experiences.map(exp => (
-            <li
-              key={exp.id}
-              className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
-            >
-              <div className="flex min-w-0 flex-col gap-1">
-                <p className="m-0 text-sm font-medium">{exp.role}</p>
-                <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
-                  {exp.company}
-                </p>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
-                  {formatRange(exp.startDate, exp.endDate)}
-                </p>
-                {exp.description && (
-                  <p className="m-0 mt-1 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
-                    {exp.description}
+      {mode === 'edit' ? (
+        experiences.length === 0 ? (
+          <div
+            className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
+            style={{ color: 'var(--ink-3)' }}
+          >
+            <p className="m-0 text-sm">No experience yet. Add your first role.</p>
+          </div>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {experiences.map(exp => (
+              <li
+                key={exp.id}
+                className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+              >
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="m-0 text-sm font-medium">{exp.role}</p>
+                  <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
+                    {exp.company}
                   </p>
-                )}
-              </div>
-              <div className="flex shrink-0 gap-1">
-                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(exp)}>
-                  <Pencil size={14} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={deleteMutation.isPending && deleteMutation.variables === exp.id}
-                  onClick={() => deleteMutation.mutate(exp.id)}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
+                    {formatRange(exp.startDate, exp.endDate)}
+                  </p>
+                  {exp.description && (
+                    <p className="m-0 mt-1 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
+                      {exp.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(exp)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={deleteMutation.isPending && deleteMutation.variables === exp.id}
+                    onClick={() => deleteMutation.mutate(exp.id)}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <PublicProfile data={previewData} />
       )}
 
       <DialogRoot open={dialogOpen} onOpenChange={handleDialogOpenChange}>

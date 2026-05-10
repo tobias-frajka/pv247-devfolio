@@ -5,19 +5,40 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
+import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
+import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { SKILL_CATEGORIES, type SkillCategory } from '@/db/schema/skill';
 import { addSkill, removeSkill } from '@/server-actions/skill';
+import type { ProfileData } from '@/types/profile-data';
 
 type Skill = { id: string; name: string; category: SkillCategory };
 
 type Suggestion = { name: string; category: SkillCategory };
 
+type PreviewSeed = {
+  profile: {
+    displayName: string | null;
+    headline: string | null;
+    bio: string | null;
+    location: string | null;
+    avatarUrl: string | null;
+    availableForWork: boolean;
+  } | null;
+  projects: ProfileData['projects'];
+  experiences: ProfileData['experiences'];
+  socials: ProfileData['socials'];
+};
+
 type Props = {
   skills: Skill[];
   suggestions: Suggestion[];
+  username: string;
+  fallbackName: string;
+  fallbackAvatar: string | null;
+  previewSeed: PreviewSeed;
 };
 
 function CategorySection({
@@ -96,11 +117,33 @@ function CategorySection({
   );
 }
 
-export function SkillsClient({ skills, suggestions }: Props) {
+export function SkillsClient({
+  skills,
+  suggestions,
+  username,
+  fallbackName,
+  fallbackAvatar,
+  previewSeed
+}: Props) {
   const router = useRouter();
+  const [mode, setMode] = useState<PreviewMode>('edit');
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, SkillCategory>>(
     Object.fromEntries(suggestions.map(s => [s.name, s.category]))
   );
+
+  const previewData: ProfileData = {
+    username,
+    displayName: previewSeed.profile?.displayName?.trim() || fallbackName || username,
+    headline: previewSeed.profile?.headline ?? '',
+    bio: previewSeed.profile?.bio ?? '',
+    location: previewSeed.profile?.location ?? '',
+    avatarUrl: previewSeed.profile?.avatarUrl?.trim() || fallbackAvatar || null,
+    availableForWork: previewSeed.profile?.availableForWork ?? false,
+    projects: previewSeed.projects,
+    experiences: previewSeed.experiences,
+    skills,
+    socials: previewSeed.socials
+  };
 
   const addMutation = useMutation({
     mutationFn: addSkill,
@@ -156,67 +199,76 @@ export function SkillsClient({ skills, suggestions }: Props) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <h1
-          className="m-0"
-          style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-        >
-          Skills
-        </h1>
-        <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-          Group your skills by category. Press Enter or click Add to add one.
-        </p>
-      </div>
-
-      {suggestions.length > 0 && (
-        <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
-          <div className="eyebrow mb-3">Suggested from your projects</div>
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {suggestions.map(s => (
-              <li key={s.name} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-sm">{s.name}</span>
-                <select
-                  className="focus-visible:border-ring rounded-md border border-[var(--hairline)] bg-[var(--paper)] px-2 py-1 text-xs outline-none"
-                  value={suggestionCategories[s.name] ?? 'Tools'}
-                  onChange={e =>
-                    handleChangeSuggestionCategory(s.name, e.target.value as SkillCategory)
-                  }
-                >
-                  {SKILL_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="xs"
-                  disabled={pendingName === s.name}
-                  onClick={() => handleAddSuggestion(s.name)}
-                >
-                  Add
-                </Button>
-              </li>
-            ))}
-          </ul>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h1
+            className="m-0"
+            style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
+          >
+            Skills
+          </h1>
+          <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+            Group your skills by category. Press Enter or click Add to add one.
+          </p>
         </div>
-      )}
-
-      <div className="flex flex-col gap-8">
-        {SKILL_CATEGORIES.map(cat => (
-          <CategorySection
-            key={cat}
-            category={cat}
-            skills={skillsByCategory[cat]}
-            onAdd={handleAdd}
-            onRemove={handleRemove}
-            removingId={removingId}
-            pendingAdd={pendingCategory === cat}
-            errorMessage={errorCategory === cat ? errorMessage : null}
-          />
-        ))}
+        <PreviewToggle mode={mode} onChange={setMode} />
       </div>
+
+      {mode === 'preview' ? (
+        <PublicProfile data={previewData} />
+      ) : (
+        <>
+          {suggestions.length > 0 && (
+            <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
+              <div className="eyebrow mb-3">Suggested from your projects</div>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {suggestions.map(s => (
+                  <li key={s.name} className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-sm">{s.name}</span>
+                    <select
+                      className="focus-visible:border-ring rounded-md border border-[var(--hairline)] bg-[var(--paper)] px-2 py-1 text-xs outline-none"
+                      value={suggestionCategories[s.name] ?? 'Tools'}
+                      onChange={e =>
+                        handleChangeSuggestionCategory(s.name, e.target.value as SkillCategory)
+                      }
+                    >
+                      {SKILL_CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="xs"
+                      disabled={pendingName === s.name}
+                      onClick={() => handleAddSuggestion(s.name)}
+                    >
+                      Add
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-8">
+            {SKILL_CATEGORIES.map(cat => (
+              <CategorySection
+                key={cat}
+                category={cat}
+                skills={skillsByCategory[cat]}
+                onAdd={handleAdd}
+                onRemove={handleRemove}
+                removingId={removingId}
+                pendingAdd={pendingCategory === cat}
+                errorMessage={errorCategory === cat ? errorMessage : null}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
