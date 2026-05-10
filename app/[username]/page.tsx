@@ -1,39 +1,35 @@
 import { eq } from 'drizzle-orm';
-import { ExternalLink, Github, Mail } from 'lucide-react';
+import { ExternalLink, Mail, Link as LinkIcon, Briefcase, Globe, AtSign } from 'lucide-react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
 import { db } from '@/db';
 import { profile, project, skill, experience, social, user } from '@/db/schema';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 type SocialIconProps = { platform: string };
 
 function SocialIcon({ platform }: SocialIconProps) {
   switch (platform) {
     case 'github':
-      return <Github size={18} />;
+      return <LinkIcon size={16} />;
     case 'x':
-      return (
-        <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.6l-5.165-6.75-5.902 6.75h-3.31l7.73-8.835L.456 2.25h6.75l4.75 6.236L17.56 2.25h.684zm-1.106 17.92h1.828L5.283 4.126H3.283l14.855 16.044z" />
-        </svg>
-      );
+      return <AtSign size={16} />;
     case 'linkedin':
-      return (
-        <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
-          <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.39v-1.2h-2.5v8.5h2.5v-4.34c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.34h2.5M6.5 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m1.25 12h-2.5v-8.5h2.5v8.5z" />
-        </svg>
-      );
+      return <Briefcase size={16} />;
     case 'email':
-      return <Mail size={18} />;
+      return <Mail size={16} />;
     case 'website':
-      return <ExternalLink size={18} />;
+      return <Globe size={16} />;
     default:
-      return <ExternalLink size={18} />;
+      return <ExternalLink size={16} />;
   }
+}
+
+function formatDate(start: Date, end: Date | null) {
+  const fmt = (d: Date) =>
+    new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return `${fmt(start)} — ${end ? fmt(end) : 'Present'}`;
 }
 
 export async function generateMetadata({
@@ -153,12 +149,10 @@ export default async function PublicProfilePage({
         {/* Hero Section */}
         <section className="flex flex-col items-center gap-6 text-center">
           {avatarUrl && (
-            <Image
+            <img
               src={avatarUrl}
               alt={displayName}
-              width={96}
-              height={96}
-              className="h-24 w-24 rounded-full border border-[var(--hairline)] object-cover"
+              className="h-28 w-28 rounded-full border border-[var(--hairline)] object-cover"
             />
           )}
 
@@ -217,27 +211,48 @@ export default async function PublicProfilePage({
               Projects
             </h2>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {projects.map(p => (
-                <Card key={p.id} className="flex flex-col gap-3 p-5">
-                  <div className="flex flex-col gap-2">
-                    <h3 className="m-0 font-medium" style={{ fontSize: 'var(--t-base)' }}>
-                      {p.title}
-                    </h3>
-                    {p.description && (
-                      <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-                        {p.description}
-                      </p>
-                    )}
+                <li
+                  key={p.id}
+                  className="flex flex-col gap-3 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      {p.githubUrl || p.liveUrl ? (
+                        <a
+                          href={p.liveUrl || p.githubUrl || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="m-0 font-medium hover:underline"
+                          style={{ fontSize: 'var(--t-base)', color: 'var(--brand)' }}
+                        >
+                          {p.title}
+                        </a>
+                      ) : (
+                        <p className="m-0 font-medium" style={{ fontSize: 'var(--t-base)' }}>
+                          {p.title}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {p.description && (
+                    <p
+                      className="m-0 line-clamp-2"
+                      style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
+                    >
+                      {p.description}
+                    </p>
+                  )}
 
                   {p.techStack.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {p.techStack.map(tech => (
                         <span
                           key={tech}
-                          className="rounded border border-[var(--hairline)] bg-[var(--paper-3)] px-2.5 py-1 text-xs"
-                          style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-3)' }}
+                          className="rounded bg-[var(--paper-3)] px-2 py-0.5 text-xs"
+                          style={{ color: 'var(--ink-2)' }}
                         >
                           {tech}
                         </span>
@@ -245,26 +260,50 @@ export default async function PublicProfilePage({
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-3 pt-2">
                     {p.githubUrl && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={p.githubUrl} target="_blank" rel="noopener noreferrer">
-                          <Github size={16} />
-                          Code
-                        </a>
-                      </Button>
+                      <a
+                        href={p.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs hover:underline"
+                        style={{ color: 'var(--ink-3)' }}
+                      >
+                        <LinkIcon size={12} /> GitHub
+                      </a>
                     )}
                     {p.liveUrl && (
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={p.liveUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink size={16} />
-                          Live
-                        </a>
-                      </Button>
+                      <a
+                        href={p.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs hover:underline"
+                        style={{ color: 'var(--ink-3)' }}
+                      >
+                        <ExternalLink size={12} /> Live
+                      </a>
                     )}
                   </div>
-                </Card>
+                </li>
               ))}
+            </ul>
+          </section>
+        )}
+
+        {/* No Projects Message */}
+        {projects.length === 0 && (
+          <section className="flex flex-col gap-4">
+            <h2
+              className="m-0 font-medium"
+              style={{ fontSize: 'var(--t-2xl)', letterSpacing: '-0.012em' }}
+            >
+              Projects
+            </h2>
+            <div
+              className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
+              style={{ color: 'var(--ink-3)' }}
+            >
+              <p className="m-0 text-sm">No projects yet.</p>
             </div>
           </section>
         )}
@@ -279,16 +318,19 @@ export default async function PublicProfilePage({
               Experience
             </h2>
 
-            <div className="flex flex-col gap-3">
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {experiences.map(e => (
-                <Card key={e.id} className="flex flex-col gap-2 p-5">
+                <li
+                  key={e.id}
+                  className="flex flex-col gap-2 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+                >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="m-0 font-medium" style={{ fontSize: 'var(--t-base)' }}>
+                    <div className="min-w-0 flex-1">
+                      <p className="m-0 font-medium" style={{ fontSize: 'var(--t-base)' }}>
                         {e.role}
-                      </h3>
+                      </p>
                       <p
-                        className="m-0 mt-1"
+                        className="m-0 mt-0.5"
                         style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
                       >
                         {e.company}
@@ -303,23 +345,21 @@ export default async function PublicProfilePage({
                         fontFamily: 'var(--font-mono)'
                       }}
                     >
-                      {e.startDate.getFullYear()}
-                      {e.endDate && ` – ${e.endDate.getFullYear()}`}
-                      {!e.endDate && ' – Present'}
+                      {formatDate(e.startDate, e.endDate)}
                     </p>
                   </div>
 
                   {e.description && (
                     <p
-                      className="m-0 mt-2"
-                      style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
+                      className="m-0 mt-1 line-clamp-2"
+                      style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-2)' }}
                     >
                       {e.description}
                     </p>
                   )}
-                </Card>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         )}
 
@@ -367,18 +407,21 @@ export default async function PublicProfilePage({
 
         {/* Socials Section */}
         {socials.length > 0 && (
-          <section className="mt-4 flex flex-col items-center gap-4 border-t border-[var(--hairline-soft)] pt-8">
-            <div className="flex gap-3">
+          <section className="flex flex-col items-center gap-6 border-t border-[var(--hairline-soft)] pt-8">
+            <div className="flex flex-wrap justify-center gap-2">
               {socials.map(s => (
                 <Button
                   key={`${s.platform}`}
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   asChild
-                  className="text-[var(--ink-2)] hover:text-[var(--ink)]"
+                  className="text-[var(--ink-2)]"
                 >
                   <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.platform}>
                     <SocialIcon platform={s.platform} />
+                    <span className="ml-1.5 capitalize">
+                      {s.platform === 'x' ? 'X' : s.platform}
+                    </span>
                   </a>
                 </Button>
               ))}
