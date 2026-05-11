@@ -22,6 +22,7 @@ export const suggestTitlesSchema = z.object({
         category: z.enum(SKILL_CATEGORIES)
       })
     )
+    .min(1)
     .max(50)
 });
 
