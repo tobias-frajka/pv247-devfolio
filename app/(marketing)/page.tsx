@@ -8,18 +8,18 @@ import { ExampleButton } from '@/components/example-button';
 const features = [
   {
     eyebrow: '01 — Editor',
-    title: 'Forms, not WYSIWYG',
-    body: "Five sections. One field at a time. Validation that tells you exactly what's wrong."
+    title: 'A form for every section',
+    body: 'Profile, projects, skills, experience, links. Each one is its own page next to a live preview, and drafts save as you type.'
   },
   {
     eyebrow: '02 — AI assist',
-    title: 'Drafts, not autopilot',
-    body: 'Bio generator, description polisher, title suggestions — every output is editable before it lands.'
+    title: "AI for the parts you'd skip",
+    body: "Stuck writing a bio? Need to make a project description sound less like a commit message? There's a button. You always edit and confirm before anything saves."
   },
   {
-    eyebrow: '03 — Public page',
-    title: 'Server-rendered & fast',
-    body: 'Real metadata. Real OG image. Loads in <200ms. Shareable on the day you sign up.'
+    eyebrow: '03 — Your page',
+    title: 'Lives at devfolio.app/you',
+    body: "Server-rendered HTML with proper OG tags, so it looks decent when you paste it into a CV, a tweet, or a recruiter's inbox. Loads in under 200ms."
   }
 ] as const;
 
@@ -28,26 +28,25 @@ export default function LandingPage() {
     <div className="bg-background min-h-full px-6 pb-20 md:px-10">
       <div className="mx-auto max-w-[1200px]">
         <section className="mx-auto max-w-[760px] pb-14 text-center">
-          <div className="eyebrow mb-4">· now in beta · v0.4</div>
+          <div className="eyebrow mb-4">v0.4 · public beta</div>
           <h1
             className="m-0 leading-[1.02] font-medium tracking-[-0.03em]"
             style={{ fontSize: 'clamp(2.4rem, 5vw, 4rem)' }}
           >
-            A portfolio for developers,
+            A portfolio site
             <br />
-            not for designers.
+            made by devs, for devs.
           </h1>
           <p
             className="mt-5 leading-[1.5]"
             style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}
           >
-            Sign in with GitHub. Fill out your projects, skills, and experience. Get a clean public
-            page at{' '}
+            GitHub login, a few forms, a public page at{' '}
             <span className="text-foreground font-mono">
               devfolio.app/
               <span style={{ color: 'var(--primary)' }}>you</span>
             </span>
-            . No CSS. No hosting. No Friday-night templates.
+            . No HTML, no hosting, no CSS to argue about.
           </p>
           <div className="mx-auto mt-7 flex max-w-[420px] flex-col items-stretch gap-3">
             <Button size="lg" className="w-full" asChild>
@@ -65,9 +64,8 @@ export default function LandingPage() {
             className="mt-7 flex justify-center gap-6 font-mono"
             style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
           >
-            <span>· no credit card</span>
-            <span>· export anytime</span>
-            <span>· open source</span>
+            <span>· free during beta</span>
+            <span>· source on github</span>
           </div>
         </section>
 
@@ -96,7 +94,7 @@ export default function LandingPage() {
           className="mt-16 text-center font-mono"
           style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
         >
-          built with next.js · drizzle · turso · anthropic · for pv247 @ fi muni
+          built with next.js · drizzle · turso · openrouter · for pv247 @ fi muni
         </footer>
       </div>
     </div>

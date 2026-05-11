@@ -13,9 +13,6 @@ export function SiteHeader() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/developers">Browse developers</Link>
         </Button>
-        <Button variant="ghost" size="sm" asChild>
-          <a href="#">Docs</a>
-        </Button>
         <Button variant="secondary" size="sm" asChild>
           <Link href="/login">Sign in</Link>
         </Button>
