@@ -20,13 +20,7 @@ export function ExampleButton() {
   };
 
   return (
-    <Button
-      size="lg"
-      variant="outline"
-      onClick={handleClick}
-      disabled={isPending}
-      className="cursor-pointer"
-    >
+    <Button size="lg" variant="outline" onClick={handleClick} disabled={isPending}>
       {isPending ? 'Loading...' : 'See an example'}
     </Button>
   );

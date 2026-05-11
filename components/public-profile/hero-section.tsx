@@ -1,4 +1,6 @@
 import { MapPin } from 'lucide-react';
+import Image from 'next/image';
+
 import type { ProfileData } from '@/types/profile-data';
 
 type Props = Pick<
@@ -17,43 +19,33 @@ export function HeroSection({
   return (
     <section className="flex flex-col items-center gap-6 text-center">
       {avatarUrl && (
-        <img
+        <Image
           src={avatarUrl}
           alt={displayName}
+          width={112}
+          height={112}
+          priority
           className="h-28 w-28 rounded-full border border-[var(--hairline)] object-cover"
         />
       )}
 
       <div className="flex flex-col gap-2">
-        <h1
-          className="m-0 font-medium"
-          style={{ fontSize: 'var(--t-3xl)', letterSpacing: '-0.022em' }}
-        >
+        <h1 className="m-0 text-[length:var(--t-3xl)] font-medium tracking-[-0.022em]">
           {displayName}
         </h1>
 
         {headline && (
-          <p className="m-0" style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}>
-            {headline}
-          </p>
+          <p className="m-0 text-[length:var(--t-lg)] text-[var(--ink-2)]">{headline}</p>
         )}
       </div>
 
       <div className="flex flex-col items-center gap-3">
         {bio && (
-          <p
-            className="m-0 max-w-[560px]"
-            style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}
-          >
-            {bio}
-          </p>
+          <p className="m-0 max-w-[560px] text-[length:var(--t-base)] text-[var(--ink-2)]">{bio}</p>
         )}
 
         {location && (
-          <div
-            className="flex items-center justify-center gap-2"
-            style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}
-          >
+          <div className="flex items-center justify-center gap-2 text-[length:var(--t-sm)] text-[var(--ink-3)]">
             <MapPin size={16} />
             <p className="m-0">{location}</p>
           </div>
@@ -62,11 +54,8 @@ export function HeroSection({
 
       {availableForWork && (
         <div className="flex items-center gap-2 rounded-full border border-[var(--brand)] bg-[var(--brand-ghost)] px-3 py-1.5">
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ backgroundColor: 'var(--brand)' }}
-          />
-          <span className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--brand)' }}>
+          <span className="inline-block h-2 w-2 rounded-full bg-[var(--brand)]" />
+          <span className="m-0 text-[length:var(--t-sm)] text-[var(--brand)]">
             Available for work
           </span>
         </div>

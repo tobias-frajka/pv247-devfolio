@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 
@@ -178,7 +179,7 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
         >
           {sortDirection === 'asc' ? '↑ Ascending' : '↓ Descending'}
         </Button>
-        <span className="text-sm" style={{ color: 'var(--ink-3)' }}>
+        <span className="text-sm text-[var(--ink-3)]">
           {filteredDevelopers.length} {filteredDevelopers.length === 1 ? 'developer' : 'developers'}
         </span>
       </div>
@@ -186,7 +187,7 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
       {/* Developers Table */}
       {filteredDevelopers.length === 0 ? (
         <div className="py-12 text-center">
-          <p style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}>
+          <p className="text-[length:var(--t-lg)] text-[var(--ink-2)]">
             No developers found matching your criteria
           </p>
         </div>
@@ -200,9 +201,11 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
               <div className="flex items-center gap-4">
                 {/* Profile Picture */}
                 {dev.avatarUrl && (
-                  <img
+                  <Image
                     src={dev.avatarUrl}
                     alt={dev.displayName}
+                    width={48}
+                    height={48}
                     className="h-12 w-12 flex-shrink-0 rounded-full border border-[var(--hairline)] object-cover"
                   />
                 )}
@@ -214,16 +217,12 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/${dev.username}`}
-                    className="hover:text-primary font-medium transition-colors"
-                    style={{ fontSize: 'var(--t-base)' }}
+                    className="hover:text-primary text-[length:var(--t-base)] font-medium transition-colors"
                   >
                     {dev.displayName}
                   </Link>
                   {dev.headline && (
-                    <p
-                      className="m-0 truncate"
-                      style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
-                    >
+                    <p className="m-0 truncate text-[length:var(--t-sm)] text-[var(--ink-2)]">
                       {dev.headline}
                     </p>
                   )}
@@ -232,51 +231,41 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
                 {/* Location */}
                 <div className="hidden flex-shrink-0 text-right lg:block">
                   {dev.location ? (
-                    <div className="flex items-center justify-end gap-1">
-                      <MapPin size={14} style={{ color: 'var(--ink-2)' }} />
-                      <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-                        {dev.location}
-                      </p>
+                    <div className="flex items-center justify-end gap-1 text-[var(--ink-2)]">
+                      <MapPin size={14} />
+                      <p className="m-0 text-[length:var(--t-sm)]">{dev.location}</p>
                     </div>
                   ) : (
-                    <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}>
-                      —
-                    </p>
+                    <p className="m-0 text-[length:var(--t-sm)] text-[var(--ink-3)]">—</p>
                   )}
                 </div>
 
                 {/* Years of Experience */}
                 <div className="hidden flex-shrink-0 text-center sm:block">
-                  <p className="m-0 font-medium" style={{ fontSize: 'var(--t-sm)' }}>
+                  <p className="m-0 text-[length:var(--t-sm)] font-medium">
                     {dev.yearsOfExperience}
                   </p>
-                  <p className="m-0" style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}>
+                  <p className="m-0 text-[length:var(--t-xs)] text-[var(--ink-3)]">
                     years of experience
                   </p>
                 </div>
 
                 {/* Project Count */}
                 <div className="hidden flex-shrink-0 text-center sm:block">
-                  <p className="m-0 font-medium" style={{ fontSize: 'var(--t-sm)' }}>
-                    {dev.projectCount}
-                  </p>
-                  <p className="m-0" style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}>
-                    projects
-                  </p>
+                  <p className="m-0 text-[length:var(--t-sm)] font-medium">{dev.projectCount}</p>
+                  <p className="m-0 text-[length:var(--t-xs)] text-[var(--ink-3)]">projects</p>
                 </div>
 
                 {/* Available for Work */}
                 <div className="hidden flex-shrink-0 text-center md:block">
                   {dev.availableForWork ? (
                     <div className="inline-flex items-center gap-1 rounded-full border border-[var(--brand)] bg-[var(--brand-ghost)] px-2 py-0.5">
-                      <span className="text-[var(--brand)]" style={{ fontSize: 'var(--t-xs)' }}>
+                      <span className="text-[length:var(--t-xs)] text-[var(--brand)]">
                         ✓ Available
                       </span>
                     </div>
                   ) : (
-                    <p className="m-0" style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}>
-                      —
-                    </p>
+                    <p className="m-0 text-[length:var(--t-xs)] text-[var(--ink-3)]">—</p>
                   )}
                 </div>
               </div>

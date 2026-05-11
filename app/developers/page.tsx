@@ -1,13 +1,19 @@
+import { isNotNull } from 'drizzle-orm';
 import Link from 'next/link';
 
+import { DevelopersBrowser } from '@/components/developers-browser';
 import { Button } from '@/components/ui/button';
 import { db } from '@/db';
-import { user, profile, experience, project } from '@/db/schema';
-import { DevelopersBrowser } from '@/components/developers-browser';
+import { user } from '@/db/schema';
+import { getAvatarUrl, getRealName } from '@/lib/queries/public-profile';
+
+const MS_PER_YEAR = 1000 * 60 * 60 * 24 * 365.25;
 
 export default async function DevelopersPage() {
-  // Fetch all users with their profiles
+  // FIXME-developers-pagination: hard cap until server-side filter/sort/paginate is built.
   const users = await db.query.user.findMany({
+    where: isNotNull(user.username),
+    limit: 100,
     with: {
       profile: true,
       experiences: true,
@@ -15,36 +21,29 @@ export default async function DevelopersPage() {
     }
   });
 
-  // Enrich users with experience years calculation
   const enrichedUsers = users.map(u => {
-    const userProfile = u.profile;
-    const displayName = userProfile?.displayName || u.name || u.username;
-    const avatarUrl = userProfile?.avatarUrl || u.image;
-
-    // Calculate years of experience (from earliest start date to now)
     let yearsOfExperience = 0;
-    if (u.experiences && u.experiences.length > 0) {
+    if (u.experiences.length > 0) {
       const earliestExp = u.experiences.reduce((min, exp) =>
         exp.startDate < min.startDate ? exp : min
       );
-      const now = new Date();
       yearsOfExperience = Math.floor(
-        (now.getTime() - earliestExp.startDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+        (new Date().getTime() - earliestExp.startDate.getTime()) / MS_PER_YEAR
       );
     }
 
     return {
       id: u.id,
-      username: u.username,
-      displayName,
-      headline: userProfile?.headline ?? '',
-      bio: userProfile?.bio ?? '',
-      location: userProfile?.location ?? '',
-      avatarUrl,
-      availableForWork: userProfile?.availableForWork ?? false,
+      username: u.username!,
+      displayName: getRealName(u) ?? u.username!,
+      headline: u.profile?.headline ?? '',
+      bio: u.profile?.bio ?? '',
+      location: u.profile?.location ?? '',
+      avatarUrl: getAvatarUrl(u),
+      availableForWork: u.profile?.availableForWork ?? false,
       yearsOfExperience,
-      projectCount: u.projects?.length ?? 0,
-      experienceCount: u.experiences?.length ?? 0
+      projectCount: u.projects.length,
+      experienceCount: u.experiences.length
     };
   });
 
@@ -56,10 +55,10 @@ export default async function DevelopersPage() {
         </Button>
 
         <div className="mb-12">
-          <h1 className="m-0 font-medium tracking-[-0.022em]" style={{ fontSize: 'var(--t-3xl)' }}>
+          <h1 className="m-0 text-[length:var(--t-3xl)] font-medium tracking-[-0.022em]">
             Find Developers
           </h1>
-          <p className="mt-2" style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}>
+          <p className="mt-2 text-[length:var(--t-lg)] text-[var(--ink-2)]">
             Search and filter through our community of talented developers
           </p>
         </div>
@@ -67,13 +66,8 @@ export default async function DevelopersPage() {
         <DevelopersBrowser initialUsers={enrichedUsers} />
 
         <div className="mt-16 flex flex-col items-center gap-4 rounded-[14px] border border-[var(--hairline)] bg-[var(--paper-2)] px-8 py-12 text-center">
-          <h2 className="m-0 font-medium" style={{ fontSize: 'var(--t-2xl)' }}>
-            Want to join?
-          </h2>
-          <p
-            className="m-0 max-w-[560px]"
-            style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}
-          >
+          <h2 className="m-0 text-[length:var(--t-2xl)] font-medium">Want to join?</h2>
+          <p className="m-0 max-w-[560px] text-[length:var(--t-base)] text-[var(--ink-2)]">
             Build your developer portfolio and showcase your skills to the community.
           </p>
           <Button size="lg" asChild>

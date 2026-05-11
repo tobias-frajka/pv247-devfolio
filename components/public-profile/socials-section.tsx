@@ -1,11 +1,20 @@
-import { AtSign, Briefcase, ExternalLink, Globe, Link as LinkIcon, Mail } from 'lucide-react';
+import { AtSign, Briefcase, Globe, Link as LinkIcon, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import type { SocialPlatform } from '@/db/schema';
 import type { ProfileData } from '@/types/profile-data';
 
 type Props = { socials: ProfileData['socials'] };
 
-function SocialIcon({ platform }: { platform: string }) {
+const SOCIAL_LABEL: Record<SocialPlatform, string> = {
+  github: 'GitHub',
+  linkedin: 'LinkedIn',
+  x: 'X',
+  website: 'Website',
+  email: 'Email'
+};
+
+function SocialIcon({ platform }: { platform: SocialPlatform }) {
   switch (platform) {
     case 'github':
       return <LinkIcon size={16} />;
@@ -17,8 +26,6 @@ function SocialIcon({ platform }: { platform: string }) {
       return <Mail size={16} />;
     case 'website':
       return <Globe size={16} />;
-    default:
-      return <ExternalLink size={16} />;
   }
 }
 
@@ -36,7 +43,7 @@ export function SocialsSection({ socials }: Props) {
           >
             <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.platform}>
               <SocialIcon platform={s.platform} />
-              <span className="ml-1.5 capitalize">{s.platform === 'x' ? 'X' : s.platform}</span>
+              <span className="ml-1.5">{SOCIAL_LABEL[s.platform]}</span>
             </a>
           </Button>
         ))}
