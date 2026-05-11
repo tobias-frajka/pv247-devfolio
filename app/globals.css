@@ -180,7 +180,8 @@ body {
   padding: 0;
 }
 html {
-  overflow-y: scroll;
+  /* Reserve scrollbar gutter at all times so Radix scroll-lock (Select, Dialog) can't shift the layout. */
+  scrollbar-gutter: stable;
 }
 body {
   background: var(--background);

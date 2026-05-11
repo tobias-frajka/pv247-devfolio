@@ -46,7 +46,6 @@ export default async function DevelopersPage() {
       availableForWork: u.profile?.availableForWork ?? false,
       yearsOfExperience,
       projectCount: u.projects.length,
-      experienceCount: u.experiences.length,
       stars: starCounts.get(u.id) ?? 0
     };
   });
@@ -54,11 +53,12 @@ export default async function DevelopersPage() {
   return (
     <div className="bg-background min-h-full px-6 pb-10 md:px-10">
       <div className="mx-auto max-w-[1200px]">
-        <div className="mb-12">
+        <div className="mb-8">
+          <p className="eyebrow m-0 mb-2">Directory</p>
           <h1 className="m-0 text-[length:var(--t-3xl)] font-medium tracking-[-0.022em]">
             Find Developers
           </h1>
-          <p className="mt-2 text-[length:var(--t-lg)] text-[var(--ink-2)]">
+          <p className="mt-2 max-w-[640px] text-[length:var(--t-lg)] text-[var(--ink-2)]">
             Search and filter through our community of talented developers
           </p>
         </div>
