@@ -7,9 +7,48 @@ import { db } from '@/db';
 import { user } from '@/db/schema';
 import { getAvatarUrl, getRealName } from '@/lib/queries/public-profile';
 
+const SHOWCASE_LIMIT = 6;
+
+function ShowcaseHeading() {
+  return (
+    <h2 className="mb-8 text-center text-[length:var(--t-2xl)] font-medium tracking-[-0.01em]">
+      Featured Developers
+    </h2>
+  );
+}
+
+export function UsersShowcaseSkeleton() {
+  return (
+    <section
+      className="reveal-fade mt-16"
+      aria-busy="true"
+      aria-label="Loading featured developers"
+    >
+      <ShowcaseHeading />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: SHOWCASE_LIMIT }).map((_, i) => (
+          <Card
+            key={i}
+            className="h-full gap-4 rounded-[14px] border-[var(--hairline)] bg-[var(--paper-2)] px-5 py-5"
+          >
+            <div className="flex items-start gap-4">
+              <div className="skeleton-bone h-16 w-16 flex-shrink-0 rounded-full border border-[var(--hairline)]" />
+              <div className="min-w-0 flex-1 space-y-2.5 pt-2">
+                <div className="skeleton-bone h-3.5 w-2/3 rounded-[4px]" />
+                <div className="skeleton-bone h-3 w-5/6 rounded-[4px]" />
+                <div className="skeleton-bone h-2.5 w-2/5 rounded-[4px]" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export async function UsersShowcase() {
   const featured = await db.query.user.findMany({
-    limit: 6,
+    limit: SHOWCASE_LIMIT,
     where: isNotNull(user.username),
     with: {
       profile: true,
@@ -23,17 +62,20 @@ export async function UsersShowcase() {
 
   return (
     <section className="mt-16">
-      <h2 className="mb-8 text-center text-[length:var(--t-2xl)] font-medium tracking-[-0.01em]">
-        Featured Developers
-      </h2>
+      <ShowcaseHeading />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {featured.map(u => {
+        {featured.map((u, i) => {
           const displayName = getRealName(u) ?? u.username!;
           const avatarUrl = getAvatarUrl(u);
           const latestExperience = u.experiences[0];
 
           return (
-            <Link key={u.id} href={`/${u.username}`}>
+            <Link
+              key={u.id}
+              href={`/${u.username}`}
+              className="reveal-rise"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
               <Card className="h-full cursor-pointer gap-4 rounded-[14px] border-[var(--hairline)] bg-[var(--paper-2)] px-5 py-5 transition-all hover:bg-[var(--paper-3)]">
                 <div className="flex items-start gap-4">
                   {avatarUrl && (

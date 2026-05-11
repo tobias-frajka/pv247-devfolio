@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/logo';
-import { UsersShowcase } from '@/components/users-showcase';
+import { UsersShowcase, UsersShowcaseSkeleton } from '@/components/users-showcase';
 import { ExampleButton } from '@/components/example-button';
 
 const features = [
@@ -103,7 +103,7 @@ export default function LandingPage() {
           ))}
         </section>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<UsersShowcaseSkeleton />}>
           <UsersShowcase />
         </Suspense>
 
