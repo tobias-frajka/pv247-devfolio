@@ -1,3 +1,4 @@
+import type { StarContext } from '@/lib/queries/stars';
 import type { ProfileData } from '@/types/profile-data';
 
 import { ExperienceSection } from './experience-section';
@@ -6,7 +7,7 @@ import { ProjectsSection } from './projects-section';
 import { SkillsSection } from './skills-section';
 import { SocialsSection } from './socials-section';
 
-export function PublicProfile({ data }: { data: ProfileData }) {
+export function PublicProfile({ data, stars }: { data: ProfileData; stars?: StarContext }) {
   return (
     <div className="bg-background min-h-full px-6 py-10 md:px-10">
       <div className="mx-auto flex max-w-[880px] flex-col gap-12">
@@ -17,6 +18,8 @@ export function PublicProfile({ data }: { data: ProfileData }) {
           location={data.location}
           avatarUrl={data.avatarUrl}
           availableForWork={data.availableForWork}
+          username={data.username}
+          stars={stars}
         />
 
         {data.projects.length > 0 && <ProjectsSection projects={data.projects} />}

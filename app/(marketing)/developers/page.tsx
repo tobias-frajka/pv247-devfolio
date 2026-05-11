@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { db } from '@/db';
 import { user } from '@/db/schema';
 import { getAvatarUrl, getRealName } from '@/lib/queries/public-profile';
+import { getStarCountsByUserIds } from '@/lib/queries/stars';
 
 const MS_PER_YEAR = 1000 * 60 * 60 * 24 * 365.25;
 
@@ -20,6 +21,8 @@ export default async function DevelopersPage() {
       projects: true
     }
   });
+
+  const starCounts = await getStarCountsByUserIds(users.map(u => u.id));
 
   const enrichedUsers = users.map(u => {
     let yearsOfExperience = 0;
@@ -43,7 +46,8 @@ export default async function DevelopersPage() {
       availableForWork: u.profile?.availableForWork ?? false,
       yearsOfExperience,
       projectCount: u.projects.length,
-      experienceCount: u.experiences.length
+      experienceCount: u.experiences.length,
+      stars: starCounts.get(u.id) ?? 0
     };
   });
 

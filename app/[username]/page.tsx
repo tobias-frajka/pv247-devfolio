@@ -9,6 +9,8 @@ import {
   getRealName,
   toProfileData
 } from '@/lib/queries/public-profile';
+import { getStarCount, hasStarred } from '@/lib/queries/stars';
+import { getStarIdentity } from '@/lib/stars/identity';
 import { truncateAtWord } from '@/lib/utils';
 
 export async function generateMetadata({
@@ -71,6 +73,13 @@ export default async function PublicProfilePage({
 
   const data = toProfileData(userData, username);
 
+  const identity = await getStarIdentity({ mint: false });
+  const [starCount, viewerHasStarred] = await Promise.all([
+    getStarCount(userData.id),
+    hasStarred(userData.id, identity.key)
+  ]);
+  const canStar = !(identity.kind === 'user' && identity.userId === userData.id);
+
   return (
     <>
       <div className="bg-background pt-10">
@@ -80,7 +89,7 @@ export default async function PublicProfilePage({
           </Button>
         </div>
       </div>
-      <PublicProfile data={data} />
+      <PublicProfile data={data} stars={{ count: starCount, viewerHasStarred, canStar }} />
     </>
   );
 }

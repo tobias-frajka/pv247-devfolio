@@ -1,11 +1,10 @@
-import { isNotNull } from 'drizzle-orm';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Star } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
-import { db } from '@/db';
-import { user } from '@/db/schema';
 import { getAvatarUrl, getRealName } from '@/lib/queries/public-profile';
+import { getTopStarredLast30Days } from '@/lib/queries/stars';
 
 const SHOWCASE_LIMIT = 6;
 
@@ -47,14 +46,7 @@ export function UsersShowcaseSkeleton() {
 }
 
 export async function UsersShowcase() {
-  const featured = await db.query.user.findMany({
-    limit: SHOWCASE_LIMIT,
-    where: isNotNull(user.username),
-    with: {
-      profile: true,
-      experiences: { orderBy: (e, { desc }) => [desc(e.startDate)], limit: 1 }
-    }
-  });
+  const featured = await getTopStarredLast30Days(SHOWCASE_LIMIT);
 
   if (featured.length === 0) {
     return null;
@@ -64,8 +56,8 @@ export async function UsersShowcase() {
     <section className="mt-16">
       <ShowcaseHeading />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {featured.map((u, i) => {
-          const displayName = getRealName(u) ?? u.username!;
+        {featured.map(({ user: u, stars }, i) => {
+          const displayName = getRealName(u) ?? u.username;
           const avatarUrl = getAvatarUrl(u);
           const latestExperience = u.experiences[0];
 
@@ -88,9 +80,15 @@ export async function UsersShowcase() {
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-[length:var(--t-base)] font-medium">
-                      {displayName}
-                    </h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="truncate text-[length:var(--t-base)] font-medium">
+                        {displayName}
+                      </h3>
+                      <span className="inline-flex flex-shrink-0 items-center gap-1 text-[length:var(--t-xs)] text-[var(--ink-2)]">
+                        <Star size={12} className="fill-current" />
+                        {stars}
+                      </span>
+                    </div>
                     {u.profile?.headline && (
                       <p className="m-0 truncate text-[length:var(--t-sm)] text-ellipsis text-[var(--ink-2)]">
                         {u.profile.headline}

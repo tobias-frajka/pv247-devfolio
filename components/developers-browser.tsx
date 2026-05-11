@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,17 +21,18 @@ type Developer = {
   yearsOfExperience: number;
   projectCount: number;
   experienceCount: number;
+  stars: number;
 };
 
-type SortField = 'name' | 'experience' | 'projects' | 'availability';
+type SortField = 'stars' | 'name' | 'experience' | 'projects' | 'availability';
 
 export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAvailableOnly, setFilterAvailableOnly] = useState(false);
   const [minExperience, setMinExperience] = useState(0);
   const [minProjects, setMinProjects] = useState(0);
-  const [sortBy, setSortBy] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortBy, setSortBy] = useState<SortField>('stars');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Filter and sort developers
   const filteredDevelopers = useMemo(() => {
@@ -69,6 +70,9 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
       let comparison = 0;
 
       switch (sortBy) {
+        case 'stars':
+          comparison = a.stars - b.stars;
+          break;
         case 'name':
           comparison = a.displayName.localeCompare(b.displayName);
           break;
@@ -162,6 +166,7 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
             onChange={e => setSortBy(e.target.value as SortField)}
             className="w-full rounded-md border border-[var(--input)] bg-black px-3 py-2 text-sm text-gray-400 outline-none"
           >
+            <option value="stars">Stars</option>
             <option value="name">Name</option>
             <option value="experience">Experience</option>
             <option value="projects">Projects</option>
@@ -238,6 +243,15 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
                   ) : (
                     <p className="m-0 text-[length:var(--t-sm)] text-[var(--ink-3)]">—</p>
                   )}
+                </div>
+
+                {/* Stars */}
+                <div className="hidden flex-shrink-0 text-center sm:block">
+                  <p className="m-0 inline-flex items-center justify-center gap-1 text-[length:var(--t-sm)] font-medium">
+                    <Star size={12} className="fill-current" />
+                    {dev.stars}
+                  </p>
+                  <p className="m-0 text-[length:var(--t-xs)] text-[var(--ink-3)]">stars</p>
                 </div>
 
                 {/* Years of Experience */}

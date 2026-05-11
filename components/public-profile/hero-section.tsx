@@ -1,12 +1,18 @@
 import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 
+import type { StarContext } from '@/lib/queries/stars';
 import type { ProfileData } from '@/types/profile-data';
+
+import { StarButton } from './star-button';
 
 type Props = Pick<
   ProfileData,
   'displayName' | 'headline' | 'bio' | 'location' | 'avatarUrl' | 'availableForWork'
->;
+> & {
+  username: string;
+  stars?: StarContext;
+};
 
 export function HeroSection({
   displayName,
@@ -14,7 +20,9 @@ export function HeroSection({
   bio,
   location,
   avatarUrl,
-  availableForWork
+  availableForWork,
+  username,
+  stars
 }: Props) {
   return (
     <section className="flex flex-col items-center gap-6 text-center">
@@ -59,6 +67,15 @@ export function HeroSection({
             Available for work
           </span>
         </div>
+      )}
+
+      {stars && (
+        <StarButton
+          username={username}
+          initialCount={stars.count}
+          initialStarred={stars.viewerHasStarred}
+          canStar={stars.canStar}
+        />
       )}
     </section>
   );

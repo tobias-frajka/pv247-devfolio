@@ -6,6 +6,7 @@ import { profile } from './profile';
 import { project } from './project';
 import { skill } from './skill';
 import { social } from './social';
+import { profileStar } from './star';
 
 export const userRelations = relations(user, ({ one, many }) => ({
   profile: one(profile, { fields: [user.id], references: [profile.userId] }),
@@ -14,7 +15,12 @@ export const userRelations = relations(user, ({ one, many }) => ({
   experiences: many(experience),
   socials: many(social),
   sessions: many(session),
-  accounts: many(account)
+  accounts: many(account),
+  starsReceived: many(profileStar)
+}));
+
+export const profileStarRelations = relations(profileStar, ({ one }) => ({
+  profileUser: one(user, { fields: [profileStar.profileUserId], references: [user.id] })
 }));
 
 export const profileRelations = relations(profile, ({ one }) => ({
