@@ -114,12 +114,18 @@ export function ProfileForm({
     onSuccess: bio => {
       setValue('bio', bio ?? '');
       setBioDialogOpen(false);
-    }
+      router.refresh();
+    },
+    onError: () => router.refresh()
   });
 
   const suggestTitlesMutation = useMutation({
     mutationFn: suggestTitles,
-    onSuccess: titles => setSuggestedTitles(titles ?? [])
+    onSuccess: titles => {
+      setSuggestedTitles(titles ?? []);
+      router.refresh();
+    },
+    onError: () => router.refresh()
   });
 
   const onSubmit = form.handleSubmit(data => saveMutation.mutate(data));
@@ -180,7 +186,7 @@ export function ProfileForm({
               />
             </div>
             {generateBioMutation.isError && (
-              <FormError className="text-sm">AI unavailable — try again in a moment</FormError>
+              <FormError className="text-sm">{generateBioMutation.error.message}</FormError>
             )}
           </div>
           <DialogFooter>
@@ -253,6 +259,9 @@ export function ProfileForm({
                 </div>
               )}
               <Input id="headline" placeholder="Full-stack Developer" {...register('headline')} />
+              {suggestTitlesMutation.isError && (
+                <FormError>{suggestTitlesMutation.error.message}</FormError>
+              )}
               <FormError>{errors.headline?.message}</FormError>
             </div>
 
@@ -293,7 +302,7 @@ export function ProfileForm({
                 </p>
               )}
               {generateBioMutation.isError && (
-                <FormError>AI unavailable — try again in a moment</FormError>
+                <FormError>{generateBioMutation.error.message}</FormError>
               )}
               <FormError>{errors.bio?.message}</FormError>
             </div>

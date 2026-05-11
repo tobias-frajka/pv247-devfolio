@@ -125,6 +125,7 @@ function ProjectDialogForm({
   isPending: boolean;
   error: Error | null;
 }) {
+  const router = useRouter();
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
@@ -148,7 +149,11 @@ function ProjectDialogForm({
 
   const improveMutation = useMutation({
     mutationFn: improveDescription,
-    onSuccess: result => setValue('description', result ?? '')
+    onSuccess: result => {
+      setValue('description', result ?? '');
+      router.refresh();
+    },
+    onError: () => router.refresh()
   });
 
   const onSubmit = form.handleSubmit(data => onSave(data));
@@ -187,7 +192,7 @@ function ProjectDialogForm({
           className={improveMutation.isPending ? 'opacity-60' : ''}
           {...register('description')}
         />
-        {improveMutation.isError && <FormError>AI unavailable — try again in a moment</FormError>}
+        {improveMutation.isError && <FormError>{improveMutation.error.message}</FormError>}
         <FormError>{errors.description?.message}</FormError>
       </div>
 
