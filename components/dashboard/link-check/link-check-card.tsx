@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 import { useCheckLinksMutation } from '@/hooks/use-check-links-mutation';
 import { Badge } from '@/components/ui/badge';
@@ -114,37 +115,38 @@ export function LinkCheckCard() {
           <p className="m-0 font-mono" style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}>
             {summarize(results)}
           </p>
-          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
             {results.map(r => {
               const badge = statusToBadge(r);
               return (
                 <li
                   key={`${r.source}-${r.targetId}-${r.url}`}
-                  className="-mx-2 grid grid-cols-[1fr_auto] items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-[var(--paper-3)]"
+                  className="-mx-2 rounded-md px-2 py-2 transition-colors hover:bg-[var(--paper-3)]"
                 >
-                  <div className="min-w-0">
-                    <p
-                      className="m-0 truncate font-medium"
-                      style={{ fontSize: 'var(--t-sm)', color: 'var(--ink)' }}
-                    >
-                      {r.label}
-                    </p>
-                    <p
-                      className="m-0 truncate font-mono"
-                      title={r.url}
-                      style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-                    >
-                      {r.url}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="mb-1 flex items-center justify-between gap-2">
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                     {r.status !== 'ok' && (
-                      <Button asChild size="xs" variant="ghost">
-                        <Link href={editHref(r.source, r.targetId)}>Edit</Link>
+                      <Button asChild size="xs" variant="ghost" className="-mr-1 h-6 px-2">
+                        <Link href={editHref(r.source, r.targetId)}>
+                          Edit
+                          <ArrowRight size={12} />
+                        </Link>
                       </Button>
                     )}
                   </div>
+                  <p
+                    className="m-0 truncate font-medium"
+                    style={{ fontSize: 'var(--t-sm)', color: 'var(--ink)' }}
+                  >
+                    {r.label}
+                  </p>
+                  <p
+                    className="m-0 truncate font-mono"
+                    title={r.url}
+                    style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
+                  >
+                    {r.url}
+                  </p>
                 </li>
               );
             })}

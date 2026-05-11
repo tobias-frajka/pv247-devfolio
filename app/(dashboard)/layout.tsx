@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await requireUsername();
 
   return (
-    <div className="bg-background grid min-h-full flex-1 grid-cols-1 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_280px]">
+    <div className="bg-background grid min-h-full flex-1 grid-cols-1 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
       <aside className="sticky top-0 hidden h-screen overflow-y-auto border-r border-[var(--hairline)] bg-[var(--paper)] px-5 py-6 lg:block">
         <div className="mb-8 flex items-center gap-3">
           <Logo size={24} />
