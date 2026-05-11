@@ -48,12 +48,8 @@ export default async function DevelopersPage() {
   });
 
   return (
-    <div className="bg-background min-h-full px-6 py-10 md:px-10">
+    <div className="bg-background min-h-full px-6 pb-10 md:px-10">
       <div className="mx-auto max-w-[1200px]">
-        <Button variant="ghost" size="sm" asChild className="mb-8">
-          <Link href="/">← Back to home</Link>
-        </Button>
-
         <div className="mb-12">
           <h1 className="m-0 text-[length:var(--t-3xl)] font-medium tracking-[-0.022em]">
             Find Developers

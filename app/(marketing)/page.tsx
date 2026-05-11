@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Logo } from '@/components/logo';
 import { UsersShowcase, UsersShowcaseSkeleton } from '@/components/users-showcase';
 import { ExampleButton } from '@/components/example-button';
 
@@ -26,23 +25,8 @@ const features = [
 
 export default function LandingPage() {
   return (
-    <div className="bg-background flex flex-1 flex-col">
-      <div className="mx-auto w-full max-w-[1100px] px-10 pt-8 pb-20">
-        <nav className="mb-16 flex items-center justify-between">
-          <Logo size={28} />
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <a href="#">Examples</a>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="#">Docs</a>
-            </Button>
-            <Button variant="secondary" size="sm" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
-          </div>
-        </nav>
-
+    <div className="bg-background min-h-full px-6 pb-20 md:px-10">
+      <div className="mx-auto max-w-[1200px]">
         <section className="mx-auto max-w-[760px] pb-14 text-center">
           <div className="eyebrow mb-4">· now in beta · v0.4</div>
           <h1
@@ -65,16 +49,17 @@ export default function LandingPage() {
             </span>
             . No CSS. No hosting. No Friday-night templates.
           </p>
-          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2.5">
-            <Button size="lg" asChild>
+          <div className="mx-auto mt-7 flex max-w-[420px] flex-col items-stretch gap-3">
+            <Button size="lg" className="w-full" asChild>
               <Link href="/login">Sign in with GitHub →</Link>
             </Button>
-            {/*<span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>*/}
-            <ExampleButton />
-            <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/developers">Search developers</Link>
-            </Button>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2.5">
+              <ExampleButton />
+              <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/developers">Search developers</Link>
+              </Button>
+            </div>
           </div>
           <div
             className="mt-7 flex justify-center gap-6 font-mono"

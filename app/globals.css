@@ -280,12 +280,27 @@ body {
   animation: devfolio-fade 560ms ease-out 80ms both;
 }
 
+@keyframes devfolio-page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-enter {
+  animation: devfolio-page-enter 280ms ease-out both;
+  will-change: opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-bone::after {
     animation: none;
   }
   .reveal-rise,
-  .reveal-fade {
+  .reveal-fade,
+  .page-enter {
     animation: none;
     opacity: 1;
     transform: none;
