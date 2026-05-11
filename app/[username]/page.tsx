@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { X } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/logo';
 import { PublicProfile } from '@/components/public-profile/public-profile';
 import {
   getPublicProfileByUsername,
@@ -82,14 +83,25 @@ export default async function PublicProfilePage({
 
   return (
     <>
-      <div className="bg-background pt-10">
-        <div className="mx-auto max-w-[880px] px-6 md:px-10">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/">← Back to home</Link>
-          </Button>
+      <div className="flex-1">
+        <div className="bg-background pt-6">
+          <div className="mx-auto flex max-w-[880px] justify-end px-6 md:px-10">
+            <Link
+              href="/"
+              aria-label="Close"
+              className="text-muted-foreground hover:text-foreground inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+            >
+              <X className="size-5" />
+            </Link>
+          </div>
         </div>
+        <PublicProfile data={data} stars={{ count: starCount, viewerHasStarred, canStar }} />
       </div>
-      <PublicProfile data={data} stars={{ count: starCount, viewerHasStarred, canStar }} />
+      <footer className="bg-background flex justify-center px-6 pb-10 md:px-10">
+        <Link href="/" aria-label="DevFolio home" className="inline-flex">
+          <Logo size={24} />
+        </Link>
+      </footer>
     </>
   );
 }
