@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
 import { projectSchema } from '@/schemas/project';
@@ -381,12 +382,18 @@ export function ProjectsClient({
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(p)}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Edit project"
+                    onClick={() => openEdit(p)}
+                  >
                     <Pencil size={14} />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label="Delete project"
                     disabled={deleteMutation.isPending && deleteMutation.variables === p.id}
                     onClick={() => deleteMutation.mutate(p.id)}
                   >
@@ -405,6 +412,9 @@ export function ProjectsClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit project' : 'Add project'}</DialogTitle>
+            <DialogDescription>
+              Title, description, tech stack, and links for your project.
+            </DialogDescription>
           </DialogHeader>
           <ProjectDialogForm
             key={editing?.id ?? 'new'}

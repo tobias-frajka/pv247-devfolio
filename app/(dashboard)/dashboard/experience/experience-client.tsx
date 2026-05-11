@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
 import { createExperience, deleteExperience, updateExperience } from '@/server-actions/experience';
@@ -325,12 +326,18 @@ export function ExperienceClient({
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(exp)}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Edit experience"
+                    onClick={() => openEdit(exp)}
+                  >
                     <Pencil size={14} />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label="Delete experience"
                     disabled={deleteMutation.isPending && deleteMutation.variables === exp.id}
                     onClick={() => deleteMutation.mutate(exp.id)}
                   >
@@ -349,6 +356,7 @@ export function ExperienceClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit experience' : 'Add experience'}</DialogTitle>
+            <DialogDescription>A job, internship, or freelance role.</DialogDescription>
           </DialogHeader>
           <ExperienceDialogForm
             key={editing?.id ?? 'new'}

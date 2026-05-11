@@ -53,6 +53,19 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
   return <Dialog.Title className={cn('text-base font-medium', className)} {...props} />;
 }
 
+function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof Dialog.Description>) {
+  return (
+    <Dialog.Description
+      className={cn('m-0 text-sm', className)}
+      style={{ color: 'var(--ink-2)' }}
+      {...props}
+    />
+  );
+}
+
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('mt-5 flex justify-end gap-2', className)} {...props} />;
 }
@@ -65,5 +78,6 @@ export {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 };

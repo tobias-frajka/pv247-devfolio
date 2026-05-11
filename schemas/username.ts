@@ -19,13 +19,16 @@ const RESERVED = new Set([
   'www'
 ]);
 
+const USERNAME_RULES =
+  'Use 3-20 characters: lowercase letters, digits, or hyphens. Must start with a letter.';
+
 export const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(3)
-  .max(20)
-  .regex(USERNAME_PATTERN, 'must start with a letter; lowercase letters, digits, hyphens')
-  .refine(v => !RESERVED.has(v), 'this username is reserved');
+  .min(3, USERNAME_RULES)
+  .max(20, USERNAME_RULES)
+  .regex(USERNAME_PATTERN, USERNAME_RULES)
+  .refine(v => !RESERVED.has(v), 'This username is reserved.');
 
 export type UsernameInput = z.infer<typeof usernameSchema>;

@@ -3,9 +3,9 @@ import { Suspense } from 'react';
 
 import { AiUsageCard } from '@/components/dashboard/ai-usage-card';
 import { AiUsageCardSkeleton } from '@/components/dashboard/ai-usage-card-skeleton';
-import { CompletenessCard } from '@/components/dashboard/completeness-card';
-import { CompletenessCardSkeleton } from '@/components/dashboard/completeness-card-skeleton';
 import { LinkCheckCard } from '@/components/dashboard/link-check/link-check-card';
+import { ProfileChecklistCard } from '@/components/dashboard/profile-checklist-card';
+import { ProfileChecklistCardSkeleton } from '@/components/dashboard/profile-checklist-card-skeleton';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { requireUsername } from '@/lib/dal';
@@ -55,12 +55,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="min-w-0 px-6 py-8 lg:px-10">{children}</main>
 
       <aside className="hidden border-l border-[var(--hairline)] bg-[var(--paper)] px-5 py-6 xl:block">
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
+          <Suspense fallback={<ProfileChecklistCardSkeleton />}>
+            <ProfileChecklistCard userId={session.user.id} username={session.user.username} />
+          </Suspense>
           <Suspense fallback={<AiUsageCardSkeleton />}>
             <AiUsageCard userId={session.user.id} />
-          </Suspense>
-          <Suspense fallback={<CompletenessCardSkeleton />}>
-            <CompletenessCard userId={session.user.id} username={session.user.username} />
           </Suspense>
           <LinkCheckCard />
         </div>

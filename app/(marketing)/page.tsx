@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { UsersShowcase, UsersShowcaseSkeleton } from '@/components/users-showcase';
 import { ExampleButton } from '@/components/example-button';
+import { getSession } from '@/lib/dal';
 
 const features = [
   {
@@ -23,7 +24,10 @@ const features = [
   }
 ] as const;
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
+  const username = session?.user.username ?? null;
+
   return (
     <div className="bg-background min-h-full px-6 pb-20 md:px-10">
       <div className="mx-auto max-w-[1200px]">
@@ -49,15 +53,27 @@ export default function LandingPage() {
             . No HTML, no hosting, no CSS to argue about.
           </p>
           <div className="mx-auto mt-7 flex max-w-[420px] flex-col items-stretch gap-3">
-            <Button size="lg" className="w-full" asChild>
-              <Link href="/login">Sign in with GitHub →</Link>
-            </Button>
+            {username ? (
+              <Button size="lg" className="w-full" asChild>
+                <Link href="/dashboard/profile">Open dashboard →</Link>
+              </Button>
+            ) : (
+              <Button size="lg" className="w-full" asChild>
+                <Link href="/login">Sign in with GitHub →</Link>
+              </Button>
+            )}
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2.5">
               <ExampleButton />
               <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/developers">Search developers</Link>
-              </Button>
+              {username ? (
+                <Button size="lg" variant="outline" asChild>
+                  <Link href={`/${username}`}>View your profile</Link>
+                </Button>
+              ) : (
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/developers">Search developers</Link>
+                </Button>
+              )}
             </div>
           </div>
           <div

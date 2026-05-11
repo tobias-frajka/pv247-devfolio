@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
@@ -19,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
 import type { SkillCategory } from '@/db/schema/skill';
@@ -157,12 +159,17 @@ export function ProfileForm({
     });
   };
 
+  const noSkills = skills.length === 0;
+
   return (
     <>
       <DialogRoot open={bioDialogOpen} onOpenChange={setBioDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Generate bio</DialogTitle>
+            <DialogDescription>
+              Tell us your role and years of experience — we&apos;ll draft a bio.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
@@ -274,7 +281,7 @@ export function ProfileForm({
                     variant="ghost"
                     size="xs"
                     onClick={handleImproveBio}
-                    disabled={generateBioMutation.isPending}
+                    disabled={generateBioMutation.isPending || noSkills}
                   >
                     Improve with AI
                   </Button>
@@ -283,7 +290,7 @@ export function ProfileForm({
                     variant="ghost"
                     size="xs"
                     onClick={handleOpenGenerateBio}
-                    disabled={generateBioMutation.isPending}
+                    disabled={generateBioMutation.isPending || noSkills}
                   >
                     Generate from scratch
                   </Button>
@@ -296,6 +303,14 @@ export function ProfileForm({
                 className={generateBioMutation.isPending ? 'opacity-60' : ''}
                 {...register('bio')}
               />
+              {noSkills && (
+                <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
+                  Add skills first —{' '}
+                  <Link href="/dashboard/skills" className="underline">
+                    go to Skills
+                  </Link>
+                </p>
+              )}
               {generateBioMutation.isPending && (
                 <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
                   Generating…

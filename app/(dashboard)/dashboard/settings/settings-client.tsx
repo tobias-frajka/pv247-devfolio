@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
 import { FormError } from '@/components/ui/form-error';
@@ -110,6 +111,8 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
     formState: { errors }
   } = form;
 
+  const usernameField = register('username');
+
   // auto-clear transient confirmations after 2s
   useEffect(() => {
     if (status.kind !== 'saved' && status.kind !== 'no-change') return;
@@ -153,7 +156,16 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="username">Username</Label>
-          <Input id="username" autoComplete="off" spellCheck={false} {...register('username')} />
+          <Input
+            id="username"
+            autoComplete="off"
+            spellCheck={false}
+            {...usernameField}
+            onChange={e => {
+              e.target.value = e.target.value.toLowerCase();
+              return usernameField.onChange(e);
+            }}
+          />
           <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
             3-20 chars, lowercase letters, digits, hyphens. Must start with a letter.
           </p>
@@ -188,6 +200,9 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm username change</DialogTitle>
+            <DialogDescription>
+              Old links to your current username will stop working.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
             <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
@@ -315,6 +330,9 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete account</DialogTitle>
+            <DialogDescription>
+              Permanently delete your portfolio and free your URL for others to claim.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
             <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
