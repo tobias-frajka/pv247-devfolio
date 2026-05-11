@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BETTER_AUTH_URL ?? 'http://localhost:3000'),
   title: 'DevFolio — Portfolios for developers',
   description:
     'Sign in with GitHub. Fill out projects, skills, and experience. Get a clean public page at devfolio.app/[you].'
