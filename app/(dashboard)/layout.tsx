@@ -40,11 +40,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="bg-background flex min-h-full flex-1 flex-col lg:grid lg:min-h-full lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
       <header className="border-hairline bg-paper flex items-center justify-between gap-3 border-b px-4 py-3 lg:hidden">
-        <div className="flex min-w-0 flex-col items-start gap-0.5">
+        <div className="flex min-w-0 items-center gap-3">
           <LogoLink size={20} />
           <Link
             href={`/${session.user.username}`}
-            className="text-foreground max-w-full truncate font-mono text-xs hover:underline"
+            className="text-foreground min-w-0 truncate font-mono text-sm hover:underline"
           >
             /{session.user.username}
           </Link>
@@ -53,11 +53,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </header>
 
       <aside className="border-hairline bg-paper sticky top-0 hidden h-screen overflow-y-auto border-r px-5 py-6 lg:block">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-8 flex flex-col items-start gap-2">
           <LogoLink size={24} />
           <Link
             href={`/${session.user.username}`}
-            className="text-foreground font-mono text-sm hover:underline"
+            className="text-foreground max-w-full truncate font-mono text-sm hover:underline"
           >
             /{session.user.username}
           </Link>
