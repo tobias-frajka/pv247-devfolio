@@ -14,7 +14,7 @@ export class AiRateLimitError extends Error {
   }
 }
 
-const todayUtc = (): string => new Date().toISOString().slice(0, 10);
+export const todayUtc = (): string => new Date().toISOString().slice(0, 10);
 
 export async function assertAndConsumeAiQuota(userId: string): Promise<void> {
   const dayKey = todayUtc();

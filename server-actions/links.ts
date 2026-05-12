@@ -36,11 +36,12 @@ async function pingOnce(url: string, method: 'HEAD' | 'GET'): Promise<Response> 
 
 async function pingUrl(url: string): Promise<{ status: LinkStatus; httpStatus?: number }> {
   const safe = await isSafeHttpUrl(url);
-  if (!safe.ok) return { status: 'unreachable' };
+  if (!safe) return { status: 'unreachable' };
+  const href = safe.href;
   try {
-    let res = await pingOnce(safe.url.toString(), 'HEAD');
+    let res = await pingOnce(href, 'HEAD');
     if (res.status === 405 || res.status === 501) {
-      res = await pingOnce(safe.url.toString(), 'GET');
+      res = await pingOnce(href, 'GET');
     }
     if (res.status >= 200 && res.status < 400) return { status: 'ok', httpStatus: res.status };
     if (res.status >= 400 && res.status < 500) return { status: 'broken', httpStatus: res.status };

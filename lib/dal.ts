@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { and, eq, type Column, type SQL } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
@@ -46,3 +47,6 @@ export const requireOwnership = async <T extends { userId: string }>(
   }
   return { session, entity };
 };
+
+export const byOwner = (table: { id: Column; userId: Column }, id: string, userId: string): SQL =>
+  and(eq(table.id, id), eq(table.userId, userId)) as SQL;

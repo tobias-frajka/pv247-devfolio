@@ -1,11 +1,11 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
 import { experience } from '@/db/schema';
-import { requireOwnership, requireUsername } from '@/lib/dal';
+import { byOwner, requireOwnership, requireUsername } from '@/lib/dal';
 import { experienceSchema } from '@/schemas/experience';
 
 export async function createExperience(input: unknown) {
@@ -30,7 +30,7 @@ export async function updateExperience(id: string, input: unknown) {
   const [row] = await db
     .update(experience)
     .set(data)
-    .where(and(eq(experience.id, id), eq(experience.userId, session.user.id)))
+    .where(byOwner(experience, id, session.user.id))
     .returning();
 
   revalidatePath('/dashboard/experience');
@@ -42,9 +42,7 @@ export async function deleteExperience(id: string) {
   const existing = await db.query.experience.findFirst({ where: eq(experience.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/experience');
 
-  await db
-    .delete(experience)
-    .where(and(eq(experience.id, id), eq(experience.userId, session.user.id)));
+  await db.delete(experience).where(byOwner(experience, id, session.user.id));
 
   revalidatePath('/dashboard/experience');
   if (session.user.username) revalidatePath(`/${session.user.username}`);

@@ -1,11 +1,11 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
 import { skill, type SkillCategory } from '@/db/schema';
-import { requireOwnership, requireUsername } from '@/lib/dal';
+import { byOwner, requireOwnership, requireUsername } from '@/lib/dal';
 import { skillSchema } from '@/schemas/skill';
 
 export async function addSkill(input: unknown) {
@@ -32,7 +32,7 @@ export async function updateSkillCategory(id: string, category: SkillCategory) {
   await db
     .update(skill)
     .set({ category })
-    .where(and(eq(skill.id, id), eq(skill.userId, session.user.id)));
+    .where(byOwner(skill, id, session.user.id));
 
   revalidatePath('/dashboard/skills');
   if (session.user.username) revalidatePath(`/${session.user.username}`);
@@ -42,7 +42,7 @@ export async function removeSkill(id: string) {
   const existing = await db.query.skill.findFirst({ where: eq(skill.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/skills');
 
-  await db.delete(skill).where(and(eq(skill.id, id), eq(skill.userId, session.user.id)));
+  await db.delete(skill).where(byOwner(skill, id, session.user.id));
 
   revalidatePath('/dashboard/skills');
   if (session.user.username) revalidatePath(`/${session.user.username}`);

@@ -4,9 +4,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { aiUsage } from '@/db/schema/ai-usage';
-import { AI_DAILY_LIMIT } from '@/lib/ai-rate-limit';
-
-const todayUtc = (): string => new Date().toISOString().slice(0, 10);
+import { AI_DAILY_LIMIT, todayUtc } from '@/lib/ai-rate-limit';
 
 export async function getAiUsageToday(userId: string): Promise<{ used: number; limit: number }> {
   const row = await db

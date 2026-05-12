@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
 import { project } from '@/db/schema';
-import { requireOwnership, requireUsername } from '@/lib/dal';
+import { byOwner, requireOwnership, requireUsername } from '@/lib/dal';
 import { projectSchema } from '@/schemas/project';
 
 export async function createProject(input: unknown) {
@@ -30,7 +30,7 @@ export async function updateProject(id: string, input: unknown) {
   const [row] = await db
     .update(project)
     .set(data)
-    .where(and(eq(project.id, id), eq(project.userId, session.user.id)))
+    .where(byOwner(project, id, session.user.id))
     .returning();
 
   revalidatePath('/dashboard/projects');
@@ -42,7 +42,7 @@ export async function deleteProject(id: string) {
   const existing = await db.query.project.findFirst({ where: eq(project.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/projects');
 
-  await db.delete(project).where(and(eq(project.id, id), eq(project.userId, session.user.id)));
+  await db.delete(project).where(byOwner(project, id, session.user.id));
 
   revalidatePath('/dashboard/projects');
   if (session.user.username) revalidatePath(`/${session.user.username}`);

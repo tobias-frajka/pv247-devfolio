@@ -38,6 +38,7 @@ export function SocialsSection({ socials }: Props) {
           const isEmail = s.platform === 'email';
           const href = isEmail ? safeMailtoUrl(s.url) : safeHttpUrl(s.url);
           if (!href) return null;
+          const linkProps = isEmail ? {} : { target: '_blank', rel: 'noopener noreferrer' };
           return (
             <Button
               key={s.platform}
@@ -46,11 +47,7 @@ export function SocialsSection({ socials }: Props) {
               asChild
               className="text-[var(--ink-2)]"
             >
-              <a
-                href={href}
-                {...(isEmail ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
-                title={s.platform}
-              >
+              <a href={href} title={s.platform} {...linkProps}>
                 <SocialIcon platform={s.platform} />
                 <span className="ml-1.5">{SOCIAL_LABEL[s.platform]}</span>
               </a>
