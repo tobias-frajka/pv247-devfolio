@@ -187,27 +187,27 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <ToolbarSelect
           label="Experience"
           value={minYears}
           onChange={v => update('minYears', v)}
           options={YEAR_OPTIONS}
-          className="w-[240px]"
+          className="w-full sm:w-[240px]"
         />
         <ToolbarSelect
           label="Projects"
           value={minProjects}
           onChange={v => update('minProjects', v)}
           options={PROJECT_OPTIONS}
-          className="w-[200px]"
+          className="w-full sm:w-[200px]"
         />
         <button
           type="button"
           onClick={() => update('availableOnly', !availableOnly)}
           aria-pressed={availableOnly}
           className={cn(
-            'inline-flex h-9 items-center gap-2 rounded-md border px-3 text-[length:var(--t-sm)] transition-colors',
+            'inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border px-3 text-[length:var(--t-sm)] transition-colors sm:w-auto sm:justify-start',
             availableOnly
               ? 'border-[var(--brand)] bg-[var(--brand-ghost)] text-[var(--brand)]'
               : 'border-[var(--hairline)] bg-transparent text-[var(--ink-2)] hover:bg-[var(--paper-3)] hover:text-[var(--ink)]'
@@ -229,18 +229,19 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
             size="sm"
             onClick={() => setFilters(prev => ({ ...DEFAULT_FILTERS, sort: prev.sort }))}
             aria-label="Clear all filters"
+            className="w-full sm:w-auto"
           >
             Clear
           </Button>
         )}
 
-        <div className="ml-auto">
+        <div className="w-full sm:ml-auto sm:w-auto">
           <ToolbarSelect
             label="Sort"
             value={sort}
             onChange={v => update('sort', v)}
             options={SORT_OPTIONS}
-            className="w-[240px]"
+            className="w-full sm:w-[240px]"
           />
         </div>
       </div>

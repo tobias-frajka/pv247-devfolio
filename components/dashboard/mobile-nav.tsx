@@ -11,9 +11,10 @@ import { signOutAction } from '@/server-actions/account';
 
 type Props = {
   items: readonly { href: string; label: string }[];
+  cards?: React.ReactNode;
 };
 
-export function MobileNav({ items }: Props) {
+export function MobileNav({ items, cards }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,7 +26,7 @@ export function MobileNav({ items }: Props) {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="sheet-overlay-show fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="border-hairline bg-paper sheet-slide-in fixed inset-y-0 left-0 z-50 flex w-[280px] max-w-[80vw] flex-col border-r p-5 shadow-2xl outline-none">
+        <Dialog.Content className="border-hairline bg-paper sheet-slide-in fixed inset-y-0 left-0 z-50 flex w-[280px] max-w-[80vw] flex-col overflow-y-auto border-r p-5 shadow-2xl outline-none">
           <VisuallyHidden.Root>
             <Dialog.Title>Dashboard navigation</Dialog.Title>
           </VisuallyHidden.Root>
@@ -38,6 +39,11 @@ export function MobileNav({ items }: Props) {
             </Dialog.Close>
           </div>
           <DashboardNav items={items} onItemClick={() => setOpen(false)} />
+          {cards ? (
+            <div className="border-hairline-soft mt-6 flex flex-col gap-6 border-t pt-6">
+              {cards}
+            </div>
+          ) : null}
           <div className="border-hairline-soft mt-auto border-t pt-4">
             <form action={signOutAction}>
               <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">

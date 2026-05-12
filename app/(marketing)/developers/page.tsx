@@ -64,7 +64,7 @@ export default async function DevelopersPage() {
 
         <DevelopersBrowser initialUsers={enrichedUsers} />
 
-        <div className="border-hairline bg-paper-2 mt-16 flex flex-col items-center gap-4 rounded-[14px] border px-8 py-12 text-center">
+        <div className="border-hairline bg-paper-2 mt-10 flex flex-col items-center gap-4 rounded-[14px] border px-5 py-10 text-center sm:mt-16 sm:px-8 sm:py-12">
           <h2 className="m-0 text-2xl font-medium">Want to join?</h2>
           <p className="text-ink-2 m-0 max-w-[560px] text-base">
             Build your developer portfolio and showcase your skills to the community.

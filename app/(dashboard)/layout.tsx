@@ -25,6 +25,18 @@ const NAV = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireUsername();
 
+  const sidebarCards = (
+    <>
+      <Suspense fallback={<ProfileChecklistCardSkeleton />}>
+        <ProfileChecklistCard userId={session.user.id} username={session.user.username} />
+      </Suspense>
+      <Suspense fallback={<AiUsageCardSkeleton />}>
+        <AiUsageCard userId={session.user.id} />
+      </Suspense>
+      <LinkCheckCard />
+    </>
+  );
+
   return (
     <div className="bg-background flex min-h-full flex-1 flex-col lg:grid lg:min-h-full lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
       <header className="border-hairline bg-paper flex items-center justify-between border-b px-4 py-3 lg:hidden">
@@ -34,7 +46,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         >
           <Logo size={20} />/{session.user.username}
         </Link>
-        <MobileNav items={NAV} />
+        <MobileNav items={NAV} cards={sidebarCards} />
       </header>
 
       <aside className="border-hairline bg-paper sticky top-0 hidden h-screen overflow-y-auto border-r px-5 py-6 lg:block">
@@ -60,15 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="min-w-0 px-6 py-8 lg:px-10">{children}</main>
 
       <aside className="border-hairline bg-paper hidden border-l px-5 py-6 xl:block">
-        <div className="flex flex-col gap-6">
-          <Suspense fallback={<ProfileChecklistCardSkeleton />}>
-            <ProfileChecklistCard userId={session.user.id} username={session.user.username} />
-          </Suspense>
-          <Suspense fallback={<AiUsageCardSkeleton />}>
-            <AiUsageCard userId={session.user.id} />
-          </Suspense>
-          <LinkCheckCard />
-        </div>
+        <div className="flex flex-col gap-6">{sidebarCards}</div>
       </aside>
     </div>
   );
