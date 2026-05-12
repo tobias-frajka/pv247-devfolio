@@ -44,7 +44,7 @@ export function MobileNav({ items, cards }: Props) {
               {cards}
             </div>
           ) : null}
-          <div className="border-hairline-soft mt-auto border-t pt-4">
+          <div className="border-hairline-soft mt-6 border-t pt-4">
             <form action={signOutAction}>
               <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
                 Sign out
