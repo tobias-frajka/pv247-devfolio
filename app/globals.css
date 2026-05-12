@@ -320,6 +320,23 @@ body {
   will-change: opacity;
 }
 
+@keyframes devfolio-sheet-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.sheet-slide-in {
+  animation: devfolio-sheet-slide 200ms ease-out;
+}
+
+.sheet-overlay-show {
+  animation: devfolio-fade 200ms ease-out;
+}
+
 /* ---------- Sonner toast — match DevFolio palette ---------- */
 [data-sonner-toaster][data-sonner-theme='dark'] {
   --normal-bg: var(--paper-2);

@@ -7,6 +7,7 @@ import { Logo } from '@/components/logo';
 import { PublicProfile } from '@/components/public-profile/public-profile';
 import {
   getPublicProfileByUsername,
+  getPublicProfileHeader,
   getRealName,
   toProfileData
 } from '@/lib/queries/public-profile';
@@ -21,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { username } = await params;
 
-  const userData = await getPublicProfileByUsername(username);
+  const userData = await getPublicProfileHeader(username);
 
   if (!userData) {
     return { title: 'Portfolio not found' };

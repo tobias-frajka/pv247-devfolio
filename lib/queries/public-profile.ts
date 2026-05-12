@@ -27,7 +27,7 @@ export const getPublicProfileHeader = cache(async (username: string) =>
     where: eq(user.username, username),
     columns: { name: true },
     with: {
-      profile: { columns: { displayName: true, headline: true } }
+      profile: { columns: { displayName: true, headline: true, bio: true } }
     }
   })
 );
