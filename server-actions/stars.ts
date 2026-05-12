@@ -31,20 +31,28 @@ export async function toggleStar(input: unknown): Promise<ToggleStarResult> {
     throw new Error('Cannot star your own profile');
   }
 
-  const existing = await db.query.profileStar.findFirst({
-    where: and(eq(profileStar.profileUserId, target.id), eq(profileStar.identityKey, identity.key)),
-    columns: { id: true }
-  });
-
-  if (existing) {
-    await db.delete(profileStar).where(eq(profileStar.id, existing.id));
-  } else {
-    await db.insert(profileStar).values({
-      profileUserId: target.id,
-      identityKey: identity.key,
-      identityKind: identity.kind
+  const { starred } = await db.transaction(async tx => {
+    const existing = await tx.query.profileStar.findFirst({
+      where: and(
+        eq(profileStar.profileUserId, target.id),
+        eq(profileStar.identityKey, identity.key)
+      ),
+      columns: { id: true }
     });
-  }
+    if (existing) {
+      await tx.delete(profileStar).where(eq(profileStar.id, existing.id));
+      return { starred: false };
+    }
+    await tx
+      .insert(profileStar)
+      .values({
+        profileUserId: target.id,
+        identityKey: identity.key,
+        identityKind: identity.kind
+      })
+      .onConflictDoNothing();
+    return { starred: true };
+  });
 
   const count = await getStarCount(target.id);
 
@@ -52,5 +60,5 @@ export async function toggleStar(input: unknown): Promise<ToggleStarResult> {
   revalidatePath('/developers');
   revalidatePath('/');
 
-  return { starred: !existing, count };
+  return { starred, count };
 }

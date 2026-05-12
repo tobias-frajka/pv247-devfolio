@@ -27,7 +27,11 @@ export async function updateProject(id: string, input: unknown) {
   const { session } = await requireOwnership(existing, '/dashboard/projects');
   const data = projectSchema.parse(input);
 
-  const [row] = await db.update(project).set(data).where(eq(project.id, id)).returning();
+  const [row] = await db
+    .update(project)
+    .set(data)
+    .where(and(eq(project.id, id), eq(project.userId, session.user.id)))
+    .returning();
 
   revalidatePath('/dashboard/projects');
   if (session.user.username) revalidatePath(`/${session.user.username}`);
@@ -38,7 +42,7 @@ export async function deleteProject(id: string) {
   const existing = await db.query.project.findFirst({ where: eq(project.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/projects');
 
-  await db.delete(project).where(eq(project.id, id));
+  await db.delete(project).where(and(eq(project.id, id), eq(project.userId, session.user.id)));
 
   revalidatePath('/dashboard/projects');
   if (session.user.username) revalidatePath(`/${session.user.username}`);

@@ -1,6 +1,6 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
@@ -29,7 +29,10 @@ export async function updateSkillCategory(id: string, category: SkillCategory) {
   const existing = await db.query.skill.findFirst({ where: eq(skill.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/skills');
 
-  await db.update(skill).set({ category }).where(eq(skill.id, id));
+  await db
+    .update(skill)
+    .set({ category })
+    .where(and(eq(skill.id, id), eq(skill.userId, session.user.id)));
 
   revalidatePath('/dashboard/skills');
   if (session.user.username) revalidatePath(`/${session.user.username}`);
@@ -39,7 +42,7 @@ export async function removeSkill(id: string) {
   const existing = await db.query.skill.findFirst({ where: eq(skill.id, id) });
   const { session } = await requireOwnership(existing, '/dashboard/skills');
 
-  await db.delete(skill).where(eq(skill.id, id));
+  await db.delete(skill).where(and(eq(skill.id, id), eq(skill.userId, session.user.id)));
 
   revalidatePath('/dashboard/skills');
   if (session.user.username) revalidatePath(`/${session.user.username}`);

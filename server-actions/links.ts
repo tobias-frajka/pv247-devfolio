@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { profile as profileTable, project, social } from '@/db/schema';
 import { requireUsername } from '@/lib/dal';
+import { isSafeHttpUrl, LINK_CHECK_CONCURRENCY, mapWithConcurrency } from '@/lib/safe-fetch';
 
 export type LinkStatus = 'ok' | 'broken' | 'server-error' | 'unreachable';
 export type LinkSource = 'project' | 'social' | 'profile';
@@ -26,7 +27,7 @@ async function pingOnce(url: string, method: 'HEAD' | 'GET'): Promise<Response> 
     return await fetch(url, {
       method,
       signal: controller.signal,
-      redirect: 'follow'
+      redirect: 'manual'
     });
   } finally {
     clearTimeout(timer);
@@ -34,10 +35,12 @@ async function pingOnce(url: string, method: 'HEAD' | 'GET'): Promise<Response> 
 }
 
 async function pingUrl(url: string): Promise<{ status: LinkStatus; httpStatus?: number }> {
+  const safe = await isSafeHttpUrl(url);
+  if (!safe.ok) return { status: 'unreachable' };
   try {
-    let res = await pingOnce(url, 'HEAD');
+    let res = await pingOnce(safe.url.toString(), 'HEAD');
     if (res.status === 405 || res.status === 501) {
-      res = await pingOnce(url, 'GET');
+      res = await pingOnce(safe.url.toString(), 'GET');
     }
     if (res.status >= 200 && res.status < 400) return { status: 'ok', httpStatus: res.status };
     if (res.status >= 400 && res.status < 500) return { status: 'broken', httpStatus: res.status };
@@ -88,10 +91,8 @@ export async function checkLinks(): Promise<LinkResult[]> {
     });
   }
 
-  return Promise.all(
-    targets.map(async t => {
-      const { status, httpStatus } = await pingUrl(t.url);
-      return { ...t, status, httpStatus };
-    })
-  );
+  return mapWithConcurrency(targets, LINK_CHECK_CONCURRENCY, async t => {
+    const { status, httpStatus } = await pingUrl(t.url);
+    return { ...t, status, httpStatus };
+  });
 }
