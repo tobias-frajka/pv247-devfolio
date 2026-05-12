@@ -15,6 +15,9 @@ export const auth = betterAuth({
       scope: ['user:email']
     }
   },
+  session: {
+    freshAge: 0
+  },
   user: {
     deleteUser: { enabled: true }
   },
