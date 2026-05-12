@@ -10,23 +10,24 @@ import { getSession } from '@/lib/dal';
 const ANON_COOKIE = 'df_anon';
 const ANON_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-if (process.env.NODE_ENV === 'production' && !process.env.STARS_IDENTITY_SECRET) {
-  throw new Error('STARS_IDENTITY_SECRET is required in production');
-}
-
 export type StarIdentity =
   | { kind: Extract<StarIdentityKind, 'user'>; key: string; userId: string }
   | { kind: Extract<StarIdentityKind, 'anon'>; key: string }
   | { kind: Extract<StarIdentityKind, 'ip'>; key: string };
 
 async function ipHashIdentity(): Promise<StarIdentity> {
+  const secret = process.env.STARS_IDENTITY_SECRET;
+  if (process.env.NODE_ENV === 'production' && !secret) {
+    throw new Error('STARS_IDENTITY_SECRET is required in production');
+  }
   const h = await headers();
   const forwarded =
     h.get('x-vercel-forwarded-for') ?? h.get('x-forwarded-for') ?? h.get('x-real-ip') ?? '';
   const ip = forwarded.split(',')[0].trim() || 'unknown';
   const ua = h.get('user-agent') ?? 'unknown';
-  const secret = process.env.STARS_IDENTITY_SECRET ?? '';
-  const hash = createHash('sha256').update(`${ip}|${ua}|${secret}`).digest('hex');
+  const hash = createHash('sha256')
+    .update(`${ip}|${ua}|${secret ?? ''}`)
+    .digest('hex');
   return { kind: 'ip', key: `ip:${hash}` };
 }
 

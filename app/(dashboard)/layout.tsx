@@ -8,7 +8,7 @@ import { LinkCheckCard } from '@/components/dashboard/link-check/link-check-card
 import { MobileNav } from '@/components/dashboard/mobile-nav';
 import { ProfileChecklistCard } from '@/components/dashboard/profile-checklist-card';
 import { ProfileChecklistCardSkeleton } from '@/components/dashboard/profile-checklist-card-skeleton';
-import { Logo } from '@/components/logo';
+import { LogoLink } from '@/components/logo-link';
 import { Button } from '@/components/ui/button';
 import { requireUsername } from '@/lib/dal';
 import { signOutAction } from '@/server-actions/account';
@@ -41,9 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="bg-background flex min-h-full flex-1 flex-col lg:grid lg:min-h-full lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
       <header className="border-hairline bg-paper flex items-center justify-between gap-3 border-b px-4 py-3 lg:hidden">
         <div className="flex min-w-0 flex-col items-start gap-0.5">
-          <Link href="/" aria-label="DevFolio home" className="inline-flex">
-            <Logo size={20} />
-          </Link>
+          <LogoLink size={20} />
           <Link
             href={`/${session.user.username}`}
             className="text-foreground max-w-full truncate font-mono text-xs hover:underline"
@@ -56,9 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <aside className="border-hairline bg-paper sticky top-0 hidden h-screen overflow-y-auto border-r px-5 py-6 lg:block">
         <div className="mb-8 flex items-center gap-3">
-          <Link href="/" aria-label="DevFolio home" className="inline-flex">
-            <Logo size={24} />
-          </Link>
+          <LogoLink size={24} />
           <Link
             href={`/${session.user.username}`}
             className="text-foreground font-mono text-sm hover:underline"
