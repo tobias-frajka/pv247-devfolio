@@ -39,19 +39,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="bg-background flex min-h-full flex-1 flex-col lg:grid lg:min-h-full lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
-      <header className="border-hairline bg-paper flex items-center justify-between border-b px-4 py-3 lg:hidden">
-        <Link
-          href={`/${session.user.username}`}
-          className="text-foreground flex items-center gap-2 font-mono text-sm hover:underline"
-        >
-          <Logo size={20} />/{session.user.username}
-        </Link>
+      <header className="border-hairline bg-paper flex items-center justify-between gap-3 border-b px-4 py-3 lg:hidden">
+        <div className="flex min-w-0 flex-col items-start gap-0.5">
+          <Link href="/" aria-label="DevFolio home" className="inline-flex">
+            <Logo size={20} />
+          </Link>
+          <Link
+            href={`/${session.user.username}`}
+            className="text-foreground max-w-full truncate font-mono text-xs hover:underline"
+          >
+            /{session.user.username}
+          </Link>
+        </div>
         <MobileNav items={NAV} cards={sidebarCards} />
       </header>
 
       <aside className="border-hairline bg-paper sticky top-0 hidden h-screen overflow-y-auto border-r px-5 py-6 lg:block">
         <div className="mb-8 flex items-center gap-3">
-          <Logo size={24} />
+          <Link href="/" aria-label="DevFolio home" className="inline-flex">
+            <Logo size={24} />
+          </Link>
           <Link
             href={`/${session.user.username}`}
             className="text-foreground font-mono text-sm hover:underline"

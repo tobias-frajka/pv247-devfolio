@@ -10,6 +10,7 @@ import type { ProfileData } from '@/types/profile-data';
 export const getPublicProfileByUsername = cache(async (username: string) =>
   db.query.user.findFirst({
     where: eq(user.username, username),
+    columns: { id: true, name: true, image: true },
     with: {
       profile: true,
       projects: { orderBy: (p, { asc }) => [asc(p.sortOrder), asc(p.createdAt)] },

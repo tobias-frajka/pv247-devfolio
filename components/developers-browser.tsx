@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Search, Star, X } from 'lucide-react';
@@ -141,22 +141,20 @@ export function DevelopersBrowser({ initialUsers }: { initialUsers: Developer[] 
   const hasActiveFilters =
     search.trim() !== '' || minYears !== 'any' || minProjects !== 'any' || availableOnly;
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return initialUsers
-      .filter(dev => {
-        if (query) {
-          const hay =
-            `${dev.displayName} ${dev.username} ${dev.headline} ${dev.bio} ${dev.location}`.toLowerCase();
-          if (!hay.includes(query)) return false;
-        }
-        if (availableOnly && !dev.availableForWork) return false;
-        if (minYears !== 'any' && dev.yearsOfExperience < minYears) return false;
-        if (minProjects !== 'any' && dev.projectCount < minProjects) return false;
-        return true;
-      })
-      .sort(compareDevelopers(sort));
-  }, [initialUsers, search, minYears, minProjects, availableOnly, sort]);
+  const query = search.trim().toLowerCase();
+  const filtered = initialUsers
+    .filter(dev => {
+      if (query) {
+        const hay =
+          `${dev.displayName} ${dev.username} ${dev.headline} ${dev.bio} ${dev.location}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      if (availableOnly && !dev.availableForWork) return false;
+      if (minYears !== 'any' && dev.yearsOfExperience < minYears) return false;
+      if (minProjects !== 'any' && dev.projectCount < minProjects) return false;
+      return true;
+    })
+    .sort(compareDevelopers(sort));
 
   return (
     <div className="space-y-5">

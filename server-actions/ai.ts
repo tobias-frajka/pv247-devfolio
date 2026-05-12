@@ -19,7 +19,7 @@ const client = new OpenAI({
 // Comma-separated. List free models first; the last entry is the paid fallback
 // used when every earlier model returns 429 (daily free-tier quota exhausted)
 // or another non-transient failure.
-const MODELS = (process.env.OPENROUTER_MODEL ?? 'openai/gpt-5.4-nano')
+const MODELS = (process.env.OPENROUTER_MODEL ?? '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
@@ -112,6 +112,9 @@ async function complete({
   maxTokens,
   temperature
 }: CompleteOptions): Promise<string> {
+  if (!process.env.OPENROUTER_API_KEY || MODELS.length === 0) {
+    throw new AiError('AI is not configured.');
+  }
   let lastErr: unknown;
   for (const model of MODELS) {
     for (let attempt = 0; attempt < 2; attempt += 1) {

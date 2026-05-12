@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { isNotNull } from 'drizzle-orm';
 import Link from 'next/link';
 
@@ -11,6 +12,11 @@ import { getStarCountsByUserIds } from '@/lib/queries/stars';
 
 const MS_PER_YEAR = 1000 * 60 * 60 * 24 * 365.25;
 
+export const metadata: Metadata = {
+  title: 'Browse Developers — DevFolio',
+  description: "Search and filter through DevFolio's developer community."
+};
+
 export default async function DevelopersPage() {
   // FIXME-developers-pagination: hard cap until server-side filter/sort/paginate is built.
   const users = await db.query.user.findMany({
@@ -23,9 +29,13 @@ export default async function DevelopersPage() {
     }
   });
 
-  const starCounts = await getStarCountsByUserIds(users.map(u => u.id));
+  const usersWithUsername = users.filter(
+    (u): u is (typeof users)[number] & { username: string } => u.username !== null
+  );
 
-  const enrichedUsers = users.map(u => {
+  const starCounts = await getStarCountsByUserIds(usersWithUsername.map(u => u.id));
+
+  const enrichedUsers = usersWithUsername.map(u => {
     let yearsOfExperience = 0;
     if (u.experiences.length > 0) {
       const earliestExp = u.experiences.reduce((min, exp) =>
@@ -38,8 +48,8 @@ export default async function DevelopersPage() {
 
     return {
       id: u.id,
-      username: u.username!,
-      displayName: getRealName(u) ?? u.username!,
+      username: u.username,
+      displayName: getRealName(u) ?? u.username,
       headline: u.profile?.headline ?? '',
       bio: u.profile?.bio ?? '',
       location: u.profile?.location ?? '',

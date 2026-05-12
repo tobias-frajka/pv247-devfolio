@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { getSession } from '@/lib/dal';
 
 import { SignInButton } from './sign-in-button';
+
+export const metadata: Metadata = {
+  title: 'Sign in — DevFolio',
+  description: 'Sign in to DevFolio with GitHub.'
+};
 
 export default async function LoginPage() {
   const session = await getSession();
