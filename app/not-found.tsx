@@ -23,94 +23,49 @@ export default function NotFound() {
       <main className="relative mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center px-6 py-20">
         <div className="eyebrow mb-8 flex items-center gap-3">
           <span>· ERR_ROUTE_NOT_FOUND</span>
-          <span style={{ color: 'var(--hairline)' }}>·</span>
-          <span style={{ color: 'var(--ink-3)' }}>0x194</span>
+          <span className="text-hairline">·</span>
+          <span className="text-ink-3">0x194</span>
         </div>
 
         <div className="mb-7 flex items-end gap-4">
           <h1
-            className="m-0 font-mono leading-[0.9] font-medium tracking-[-0.04em]"
-            style={{
-              fontSize: 'clamp(5rem, 16vw, 9.5rem)',
-              color: 'var(--ink)'
-            }}
+            className="text-ink m-0 font-mono leading-[0.9] font-medium tracking-[-0.04em]"
+            style={{ fontSize: 'clamp(5rem, 16vw, 9.5rem)' }}
           >
             404
           </h1>
           <span
             aria-hidden
-            className="bg-primary mb-4 inline-block rounded-full"
-            style={{
-              width: 14,
-              height: 14,
-              boxShadow: '0 0 0 4px var(--brand-ghost)'
-            }}
+            className="bg-primary mb-4 inline-block h-3.5 w-3.5 rounded-full"
+            style={{ boxShadow: '0 0 0 4px var(--brand-ghost)' }}
           />
         </div>
 
-        <h2
-          className="m-0 font-medium"
-          style={{
-            fontSize: 'var(--t-2xl)',
-            letterSpacing: '-0.022em',
-            color: 'var(--ink)'
-          }}
-        >
+        <h2 className="text-ink m-0 text-2xl font-medium tracking-tight">
           We grep&apos;d the codebase. No matches.
         </h2>
 
-        <p
-          className="mt-3 mb-8 max-w-[52ch]"
-          style={{ fontSize: 'var(--t-base)', color: 'var(--ink-2)' }}
-        >
+        <p className="text-ink-2 mt-3 mb-8 max-w-[52ch] text-base">
           The path you tried doesn&apos;t resolve to a route in this app. Most likely a typo or a
           link that&apos;s gone stale. The portfolio you&apos;re looking for might also have been
           deleted, or never existed.
         </p>
 
-        <div
-          className="mb-8 overflow-hidden rounded-[10px] border font-mono"
-          style={{
-            background: 'var(--paper-2)',
-            borderColor: 'var(--hairline)',
-            fontSize: 'var(--t-sm)'
-          }}
-        >
-          <div
-            className="flex items-center gap-2 border-b px-3 py-1.5"
-            style={{
-              borderColor: 'var(--hairline-soft)',
-              color: 'var(--ink-3)',
-              fontSize: 'var(--t-xs)'
-            }}
-          >
-            <span
-              aria-hidden
-              className="inline-block rounded-full"
-              style={{ width: 8, height: 8, background: 'var(--danger)' }}
-            />
-            <span
-              aria-hidden
-              className="inline-block rounded-full"
-              style={{ width: 8, height: 8, background: 'var(--warn)' }}
-            />
-            <span
-              aria-hidden
-              className="inline-block rounded-full"
-              style={{ width: 8, height: 8, background: 'var(--brand)' }}
-            />
+        <div className="border-hairline bg-paper-2 mb-8 overflow-hidden rounded-[10px] border font-mono text-sm">
+          <div className="border-hairline-soft text-ink-3 flex items-center gap-2 border-b px-3 py-1.5 text-xs">
+            <span aria-hidden className="bg-danger inline-block h-2 w-2 rounded-full" />
+            <span aria-hidden className="bg-warn inline-block h-2 w-2 rounded-full" />
+            <span aria-hidden className="bg-brand inline-block h-2 w-2 rounded-full" />
             <span className="ml-2">~/devfolio — zsh</span>
           </div>
           <div className="px-4 py-3">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span style={{ color: 'var(--brand)' }}>$</span>
-              <span style={{ color: 'var(--ink-2)' }}>resolve</span>
-              <span style={{ color: 'var(--ink)' }}>devfolio.app{path}</span>
+              <span className="text-brand">$</span>
+              <span className="text-ink-2">resolve</span>
+              <span className="text-ink">devfolio.app{path}</span>
               <span aria-hidden className="not-found-cursor" />
             </div>
-            <div className="mt-1 pl-4" style={{ color: 'var(--danger)' }}>
-              → no such file or directory
-            </div>
+            <div className="text-danger mt-1 pl-4">→ no such file or directory</div>
           </div>
         </div>
 
@@ -126,20 +81,13 @@ export default function NotFound() {
           </Button>
         </div>
 
-        <div
-          aria-hidden
-          className="mb-3 flex items-center gap-3 font-mono"
-          style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-        >
-          <span className="h-px flex-1" style={{ background: 'var(--hairline-soft)' }} />
+        <div aria-hidden className="text-ink-3 mb-3 flex items-center gap-3 font-mono text-xs">
+          <span className="bg-hairline-soft h-px flex-1" />
           <span>stack trace (truncated)</span>
-          <span className="h-px flex-1" style={{ background: 'var(--hairline-soft)' }} />
+          <span className="bg-hairline-soft h-px flex-1" />
         </div>
 
-        <pre
-          className="m-0 overflow-x-auto font-mono leading-[1.7] whitespace-pre"
-          style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-        >
+        <pre className="text-ink-3 m-0 overflow-x-auto font-mono text-xs leading-[1.7] whitespace-pre">
           {`Error: Page not found
     at Router.match (app/router.ts:404:1)
     at Browser.navigate (window.location)

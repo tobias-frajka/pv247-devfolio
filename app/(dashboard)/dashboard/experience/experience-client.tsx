@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { FormError } from '@/components/ui/form-error';
+import { PageTitle } from '@/components/ui/page-title';
 import {
   DialogRoot,
   DialogContent,
@@ -65,6 +66,10 @@ type Props = {
   previewSeed: PreviewSeed;
 };
 
+// Form-side schema. The canonical server-side schema is `experienceSchema` in
+// schemas/experience.ts; we diverge only in (1) date fields typed as `<input type="date">`
+// strings instead of Date objects, and (2) a UI-only `currentlyWorking` checkbox that
+// gates the end-date input. The handler at onSubmit converts back to ExperienceInput.
 const formSchema = z
   .object({
     company: z.string().min(1, 'Required').max(120),
@@ -222,7 +227,6 @@ export function ExperienceClient({
   fallbackAvatar,
   previewSeed
 }: Props) {
-  const router = useRouter();
   const [mode, setMode] = useState<PreviewMode>('edit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Experience | null>(null);
@@ -243,7 +247,8 @@ export function ExperienceClient({
 
   const deleteMutation = useMutation({
     mutationFn: deleteExperience,
-    onSuccess: () => router.refresh()
+    onSuccess: () => toast.success('Experience deleted'),
+    onError: err => toast.error(err.message)
   });
 
   const saveMutation = useMutation({
@@ -254,10 +259,11 @@ export function ExperienceClient({
         await createExperience(data);
       }
     },
-    onSuccess: () => {
-      router.refresh();
+    onSuccess: (_, vars) => {
+      toast.success(vars.editingId ? 'Experience updated' : 'Experience added');
       setDialogOpen(false);
-    }
+    },
+    onError: err => toast.error(err.message)
   });
 
   const openAdd = () => {
@@ -280,12 +286,7 @@ export function ExperienceClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1
-          className="m-0"
-          style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-        >
-          Experience
-        </h1>
+        <PageTitle>Experience</PageTitle>
         <div className="flex gap-2">
           <PreviewToggle mode={mode} onChange={setMode} />
           {mode === 'edit' && (
@@ -298,10 +299,7 @@ export function ExperienceClient({
 
       {mode === 'edit' ? (
         experiences.length === 0 ? (
-          <div
-            className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
-            style={{ color: 'var(--ink-3)' }}
-          >
+          <div className="border-hairline text-ink-3 rounded-lg border border-dashed p-10 text-center">
             <p className="m-0 text-sm">No experience yet. Add your first role.</p>
           </div>
         ) : (
@@ -309,20 +307,16 @@ export function ExperienceClient({
             {experiences.map(exp => (
               <li
                 key={exp.id}
-                className="flex items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+                className="border-hairline-soft bg-paper-2 flex items-start justify-between gap-4 rounded-lg border p-4"
               >
                 <div className="flex min-w-0 flex-col gap-1">
                   <p className="m-0 text-sm font-medium">{exp.role}</p>
-                  <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
-                    {exp.company}
-                  </p>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
+                  <p className="text-ink-2 m-0 text-sm">{exp.company}</p>
+                  <p className="text-ink-3 m-0 text-xs">
                     {formatRange(exp.startDate, exp.endDate)}
                   </p>
                   {exp.description && (
-                    <p className="m-0 mt-1 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
-                      {exp.description}
-                    </p>
+                    <p className="text-ink-2 m-0 mt-1 line-clamp-2 text-xs">{exp.description}</p>
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">

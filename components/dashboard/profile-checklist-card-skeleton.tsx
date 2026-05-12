@@ -1,10 +1,6 @@
 export const ProfileChecklistCardSkeleton = () => (
-  <div className="relative overflow-hidden rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
-    <div
-      aria-hidden
-      className="absolute inset-x-0 top-0 h-[2px]"
-      style={{ background: 'var(--brand)' }}
-    />
+  <div className="border-hairline-soft bg-paper-2 relative overflow-hidden rounded-lg border p-4">
+    <div aria-hidden className="bg-brand absolute inset-x-0 top-0 h-[2px]" />
     <div className="flex items-center justify-between">
       <div className="eyebrow">profile</div>
       <div className="skeleton-bone h-3 w-12 rounded-[4px]" />

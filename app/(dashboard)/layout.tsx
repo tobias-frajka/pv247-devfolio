@@ -25,13 +25,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="bg-background grid min-h-full flex-1 grid-cols-1 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_320px]">
-      <aside className="sticky top-0 hidden h-screen overflow-y-auto border-r border-[var(--hairline)] bg-[var(--paper)] px-5 py-6 lg:block">
+      <aside className="border-hairline bg-paper sticky top-0 hidden h-screen overflow-y-auto border-r px-5 py-6 lg:block">
         <div className="mb-8 flex items-center gap-3">
           <Logo size={24} />
           <Link
             href={`/${session.user.username}`}
-            className="text-foreground font-mono hover:underline"
-            style={{ fontSize: 'var(--t-sm)' }}
+            className="text-foreground font-mono text-sm hover:underline"
           >
             /{session.user.username}
           </Link>
@@ -43,7 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </Button>
           ))}
         </nav>
-        <div className="mt-8 border-t border-[var(--hairline-soft)] pt-4">
+        <div className="border-hairline-soft mt-8 border-t pt-4">
           <form action={signOutAction}>
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
               Sign out
@@ -54,7 +53,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <main className="min-w-0 px-6 py-8 lg:px-10">{children}</main>
 
-      <aside className="hidden border-l border-[var(--hairline)] bg-[var(--paper)] px-5 py-6 xl:block">
+      <aside className="border-hairline bg-paper hidden border-l px-5 py-6 xl:block">
         <div className="flex flex-col gap-6">
           <Suspense fallback={<ProfileChecklistCardSkeleton />}>
             <ProfileChecklistCard userId={session.user.id} username={session.user.username} />

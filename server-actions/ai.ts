@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import OpenAI from 'openai';
 
 import { assertAndConsumeAiQuota } from '@/lib/ai-rate-limit';
@@ -163,7 +164,7 @@ export async function generateBio(input: unknown): Promise<string> {
   const { role, yearsExperience, topSkills } = generateBioSchema.parse(input);
   await assertAndConsumeAiQuota(session.user.id);
 
-  return complete({
+  const text = await complete({
     system: BIO_SYSTEM,
     user: `<role>${role}</role>
 <years_experience>${yearsExperience}</years_experience>
@@ -171,6 +172,8 @@ export async function generateBio(input: unknown): Promise<string> {
     maxTokens: 300,
     temperature: 0.7
   });
+  revalidatePath('/dashboard', 'layout');
+  return text;
 }
 
 const IMPROVE_SYSTEM = `You are polishing a project description for a developer's portfolio. The reader is another developer or a hiring manager browsing the developer's public projects.
@@ -190,7 +193,7 @@ export async function improveDescription(input: unknown): Promise<string> {
   const { title, techStack, description } = improveDescriptionSchema.parse(input);
   await assertAndConsumeAiQuota(session.user.id);
 
-  return complete({
+  const text = await complete({
     system: IMPROVE_SYSTEM,
     user: `<project_title>${title}</project_title>
 <tech_stack>${techStack.join(', ')}</tech_stack>
@@ -198,6 +201,8 @@ export async function improveDescription(input: unknown): Promise<string> {
     maxTokens: 400,
     temperature: 0.5
   });
+  revalidatePath('/dashboard', 'layout');
+  return text;
 }
 
 const TITLES_SYSTEM = `You suggest professional job titles for a developer based on their skills.
@@ -255,5 +260,6 @@ ${skills.map(s => `${s.name} (${s.category})`).join('\n')}
     temperature: 0.4
   });
 
+  revalidatePath('/dashboard', 'layout');
   return parseTitleList(text).slice(0, 5);
 }

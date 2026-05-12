@@ -1,5 +1,5 @@
 export const AiUsageCardSkeleton = () => (
-  <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
+  <div className="border-hairline-soft bg-paper-2 rounded-lg border p-4">
     <div className="flex items-center justify-between">
       <div className="eyebrow">ai usage</div>
       <div className="skeleton-bone h-3 w-12 rounded-[4px]" />

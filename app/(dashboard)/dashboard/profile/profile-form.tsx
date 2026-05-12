@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
 import { PublicProfile } from '@/components/public-profile/public-profile';
@@ -15,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { FormError } from '@/components/ui/form-error';
+import { PageDescription, PageTitle } from '@/components/ui/page-title';
 import {
   DialogRoot,
   DialogContent,
@@ -60,7 +62,6 @@ export function ProfileForm({
 }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<PreviewMode>('edit');
-  const [saved, setSaved] = useState(false);
   const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
   const [bioDialogOpen, setBioDialogOpen] = useState(false);
   const [bioRole, setBioRole] = useState('');
@@ -104,21 +105,23 @@ export function ProfileForm({
 
   const saveMutation = useMutation({
     mutationFn: upsertProfile,
-    onSuccess: () => {
-      router.refresh();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }
+    onSuccess: () => toast.success('Profile saved'),
+    onError: err => toast.error(err.message)
   });
 
+  // AI mutations: revalidatePath in the action invalidates the server cache, but
+  // useMutation does not auto-refetch the way useActionState does — router.refresh()
+  // is what causes the sidebar AiUsageCard (an RSC in the dashboard layout) to
+  // re-render with the bumped quota.
   const generateBioMutation = useMutation({
     mutationFn: generateBio,
     onSuccess: bio => {
       setValue('bio', bio ?? '');
       setBioDialogOpen(false);
       router.refresh();
+      toast.success('Bio generated');
     },
-    onError: () => router.refresh()
+    onError: err => toast.error(err.message)
   });
 
   const suggestTitlesMutation = useMutation({
@@ -126,8 +129,9 @@ export function ProfileForm({
     onSuccess: titles => {
       setSuggestedTitles(titles ?? []);
       router.refresh();
+      toast.success('Titles suggested');
     },
-    onError: () => router.refresh()
+    onError: err => toast.error(err.message)
   });
 
   const onSubmit = form.handleSubmit(data => saveMutation.mutate(data));
@@ -214,15 +218,10 @@ export function ProfileForm({
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <h1
-              className="m-0"
-              style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-            >
-              Profile
-            </h1>
-            <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+            <PageTitle>Profile</PageTitle>
+            <PageDescription>
               This shows on your public page at <span className="font-mono">/{username}</span>
-            </p>
+            </PageDescription>
           </div>
           <PreviewToggle mode={mode} onChange={setMode} />
         </div>
@@ -254,7 +253,7 @@ export function ProfileForm({
                     <button
                       key={title}
                       type="button"
-                      className="rounded-md border border-[var(--hairline)] bg-[var(--paper-2)] px-2 py-0.5 text-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)]"
+                      className="border-hairline bg-paper-2 hover:border-brand hover:text-brand rounded-md border px-2 py-0.5 text-xs transition-colors"
                       onClick={() => {
                         setValue('headline', title);
                         setSuggestedTitles([]);
@@ -304,18 +303,14 @@ export function ProfileForm({
                 {...register('bio')}
               />
               {noSkills && (
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
+                <p className="text-ink-3 m-0 text-xs">
                   Add skills first —{' '}
                   <Link href="/dashboard/skills" className="underline">
                     go to Skills
                   </Link>
                 </p>
               )}
-              {generateBioMutation.isPending && (
-                <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
-                  Generating…
-                </p>
-              )}
+              {generateBioMutation.isPending && <p className="text-ink-3 text-xs">Generating…</p>}
               {generateBioMutation.isError && (
                 <FormError>{generateBioMutation.error.message}</FormError>
               )}
@@ -338,12 +333,10 @@ export function ProfileForm({
               <FormError>{errors.avatarUrl?.message}</FormError>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] px-4 py-3">
+            <div className="border-hairline-soft bg-paper-2 flex items-center justify-between rounded-lg border px-4 py-3">
               <div>
                 <p className="m-0 text-sm font-medium">Available for work</p>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-2)' }}>
-                  Shows a badge on your public profile
-                </p>
+                <p className="text-ink-2 m-0 text-xs">Shows a badge on your public profile</p>
               </div>
               <Controller
                 control={control}
@@ -358,11 +351,6 @@ export function ProfileForm({
               <Button type="submit" disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? 'Saving…' : 'Save profile'}
               </Button>
-              {saved && (
-                <span className="text-sm" style={{ color: 'var(--ok)' }}>
-                  Saved
-                </span>
-              )}
               <FormError className="text-sm">{saveMutation.error?.message}</FormError>
             </div>
           </form>

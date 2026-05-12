@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
 import { PublicProfile } from '@/components/public-profile/public-profile';
 import { Button } from '@/components/ui/button';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
+import { PageDescription, PageTitle } from '@/components/ui/page-title';
 import { SKILL_CATEGORIES, type SkillCategory } from '@/db/schema/skill';
 import { addSkill, removeSkill } from '@/server-actions/skill';
 import type { ProfileData } from '@/types/profile-data';
@@ -74,12 +75,12 @@ function CategorySection({
         {skills.map(s => (
           <span
             key={s.id}
-            className="flex items-center gap-1.5 rounded-md border border-[var(--hairline)] bg-[var(--paper-2)] px-2.5 py-1 text-sm"
+            className="border-hairline bg-paper-2 flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm"
           >
             {s.name}
             <button
               type="button"
-              className="flex items-center text-[var(--ink-3)] hover:text-[var(--ink)]"
+              className="text-ink-3 hover:text-ink flex items-center"
               onClick={() => onRemove(s.id)}
               disabled={removingId === s.id}
             >
@@ -125,7 +126,6 @@ export function SkillsClient({
   fallbackAvatar,
   previewSeed
 }: Props) {
-  const router = useRouter();
   const [mode, setMode] = useState<PreviewMode>('edit');
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, SkillCategory>>(
     Object.fromEntries(suggestions.map(s => [s.name, s.category]))
@@ -145,14 +145,16 @@ export function SkillsClient({
     socials: previewSeed.socials
   };
 
-  const addMutation = useMutation({
+  const addMutation = useMutation<unknown, Error, { name: string; category: SkillCategory }>({
     mutationFn: addSkill,
-    onSuccess: () => router.refresh()
+    onSuccess: () => toast.success('Skill added'),
+    onError: err => toast.error(err.message)
   });
 
-  const removeMutation = useMutation({
+  const removeMutation = useMutation<unknown, Error, string>({
     mutationFn: removeSkill,
-    onSuccess: () => router.refresh()
+    onSuccess: () => toast.success('Skill removed'),
+    onError: err => toast.error(err.message)
   });
 
   const handleAdd = (name: string, category: SkillCategory) => {
@@ -180,20 +182,12 @@ export function SkillsClient({
     {} as Record<SkillCategory, Skill[]>
   );
 
-  const removingId =
-    removeMutation.isPending && typeof removeMutation.variables === 'string'
-      ? removeMutation.variables
-      : null;
+  const removingId = removeMutation.isPending ? removeMutation.variables : null;
 
-  const pendingVariables =
-    addMutation.isPending && addMutation.variables
-      ? (addMutation.variables as { name: string; category: SkillCategory })
-      : null;
+  const pendingVariables = addMutation.isPending ? addMutation.variables : null;
   const pendingCategory = pendingVariables?.category ?? null;
   const pendingName = pendingVariables?.name ?? null;
-  const errorVariables = addMutation.error
-    ? (addMutation.variables as { name: string; category: SkillCategory } | undefined)
-    : null;
+  const errorVariables = addMutation.error ? addMutation.variables : null;
   const errorCategory = errorVariables?.category ?? null;
   const errorMessage = addMutation.error?.message ?? null;
 
@@ -201,15 +195,10 @@ export function SkillsClient({
     <div className="flex flex-col gap-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1
-            className="m-0"
-            style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-          >
-            Skills
-          </h1>
-          <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+          <PageTitle>Skills</PageTitle>
+          <PageDescription>
             Group your skills by category. Press Enter or click Add to add one.
-          </p>
+          </PageDescription>
         </div>
         <PreviewToggle mode={mode} onChange={setMode} />
       </div>
@@ -219,14 +208,14 @@ export function SkillsClient({
       ) : (
         <>
           {suggestions.length > 0 && (
-            <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
+            <div className="border-hairline-soft bg-paper-2 rounded-lg border p-4">
               <div className="eyebrow mb-3">Suggested from your projects</div>
               <ul className="m-0 flex list-none flex-col gap-2 p-0">
                 {suggestions.map(s => (
                   <li key={s.name} className="flex items-center gap-2">
                     <span className="min-w-0 flex-1 truncate text-sm">{s.name}</span>
                     <select
-                      className="focus-visible:border-ring rounded-md border border-[var(--hairline)] bg-[var(--paper)] px-2 py-1 text-xs outline-none"
+                      className="focus-visible:border-ring border-hairline bg-paper rounded-md border px-2 py-1 text-xs outline-none"
                       value={suggestionCategories[s.name] ?? 'Tools'}
                       onChange={e =>
                         handleChangeSuggestionCategory(s.name, e.target.value as SkillCategory)

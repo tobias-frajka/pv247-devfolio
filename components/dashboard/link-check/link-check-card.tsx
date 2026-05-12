@@ -50,8 +50,6 @@ function summarize(results: LinkResult[]): string {
   return parts.join(' · ');
 }
 
-const labelStyle = { fontSize: 'var(--t-sm)', color: 'var(--ink-2)' } as const;
-
 export function LinkCheckCard() {
   const mutation = useCheckLinksMutation();
   const results = mutation.data;
@@ -65,14 +63,8 @@ export function LinkCheckCard() {
   const hasIssues = results?.some(r => r.status !== 'ok') ?? false;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
-      {hasIssues && (
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-[2px]"
-          style={{ background: 'var(--warn)' }}
-        />
-      )}
+    <div className="border-hairline-soft bg-paper-2 relative overflow-hidden rounded-lg border p-4">
+      {hasIssues && <div aria-hidden className="bg-warn absolute inset-x-0 top-0 h-[2px]" />}
       <div className="mb-3 flex items-center justify-between">
         <div className="eyebrow">link checker</div>
         <Button
@@ -87,53 +79,38 @@ export function LinkCheckCard() {
       </div>
 
       {mutation.isIdle && (
-        <p className="m-0" style={labelStyle}>
+        <p className="text-ink-2 m-0 text-sm">
           Run a check on your project, social, and avatar links.
         </p>
       )}
 
-      {mutation.isPending && (
-        <p className="m-0 font-mono" style={{ ...labelStyle, fontSize: 'var(--t-xs)' }}>
-          Checking…
-        </p>
-      )}
+      {mutation.isPending && <p className="text-ink-2 m-0 font-mono text-xs">Checking…</p>}
 
       {mutation.isError && (
-        <p className="m-0" style={{ ...labelStyle, color: 'var(--danger)' }}>
+        <p className="text-danger m-0 text-sm">
           Couldn&apos;t run the check. {mutation.error.message}
         </p>
       )}
 
       {mutation.isSuccess && results && results.length === 0 && (
-        <p className="m-0" style={labelStyle}>
+        <p className="text-ink-2 m-0 text-sm">
           No links to check yet. Add a project, social, or avatar URL.
         </p>
       )}
 
       {mutation.isSuccess && results && results.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="m-0 font-mono" style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}>
-            {summarize(results)}
-          </p>
+          <p className="text-ink-3 m-0 font-mono text-xs">{summarize(results)}</p>
           <ul className="m-0 flex list-none flex-col p-0">
             {results.map(r => {
               const badge = statusToBadge(r);
               return (
                 <li
                   key={`${r.source}-${r.targetId}-${r.url}`}
-                  className="border-b border-[var(--hairline-soft)] py-3 first:pt-0 last:border-b-0 last:pb-0"
+                  className="border-hairline-soft border-b py-3 first:pt-0 last:border-b-0 last:pb-0"
                 >
-                  <p
-                    className="m-0 truncate font-medium"
-                    style={{ fontSize: 'var(--t-sm)', color: 'var(--ink)' }}
-                  >
-                    {r.label}
-                  </p>
-                  <p
-                    className="m-0 truncate font-mono"
-                    title={r.url}
-                    style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-                  >
+                  <p className="text-ink m-0 truncate text-sm font-medium">{r.label}</p>
+                  <p className="text-ink-3 m-0 truncate font-mono text-xs" title={r.url}>
                     {r.url}
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-2">

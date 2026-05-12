@@ -41,14 +41,11 @@ export default async function LandingPage() {
             <br />
             made by devs, for devs.
           </h1>
-          <p
-            className="mt-5 leading-[1.5]"
-            style={{ fontSize: 'var(--t-lg)', color: 'var(--ink-2)' }}
-          >
+          <p className="text-ink-2 mt-5 text-lg leading-[1.5]">
             GitHub login, a few forms, a public page at{' '}
             <span className="text-foreground font-mono">
               devfolio.app/
-              <span style={{ color: 'var(--primary)' }}>you</span>
+              <span className="text-primary">you</span>
             </span>
             . No HTML, no hosting, no CSS to argue about.
           </p>
@@ -64,7 +61,7 @@ export default async function LandingPage() {
             )}
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-2.5">
               <ExampleButton />
-              <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-sm)' }}>or</span>
+              <span className="text-ink-3 text-sm">or</span>
               {username ? (
                 <Button size="lg" variant="outline" asChild>
                   <Link href={`/${username}`}>View your profile</Link>
@@ -76,10 +73,7 @@ export default async function LandingPage() {
               )}
             </div>
           </div>
-          <div
-            className="mt-7 flex justify-center gap-6 font-mono"
-            style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-          >
+          <div className="text-ink-3 mt-7 flex justify-center gap-6 font-mono text-xs">
             <span>· free during beta</span>
             <span>· source on github</span>
           </div>
@@ -89,15 +83,11 @@ export default async function LandingPage() {
           {features.map(f => (
             <Card
               key={f.eyebrow}
-              className="gap-3 rounded-[14px] border-[var(--hairline)] bg-[var(--paper-2)] px-5 py-5"
+              className="border-hairline bg-paper-2 gap-3 rounded-[14px] px-5 py-5"
             >
               <div className="eyebrow">{f.eyebrow}</div>
-              <div className="font-medium tracking-[-0.01em]" style={{ fontSize: 'var(--t-lg)' }}>
-                {f.title}
-              </div>
-              <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-                {f.body}
-              </p>
+              <div className="text-lg font-medium tracking-[-0.01em]">{f.title}</div>
+              <p className="text-ink-2 m-0 text-sm">{f.body}</p>
             </Card>
           ))}
         </section>
@@ -106,10 +96,7 @@ export default async function LandingPage() {
           <UsersShowcase />
         </Suspense>
 
-        <footer
-          className="mt-16 text-center font-mono"
-          style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-        >
+        <footer className="text-ink-3 mt-16 text-center font-mono text-xs">
           built with next.js · drizzle · turso · openrouter · for pv247 @ fi muni
         </footer>
       </div>

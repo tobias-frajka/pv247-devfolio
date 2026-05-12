@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { DevelopersBrowser } from '@/components/developers-browser';
 import { Button } from '@/components/ui/button';
+import { PageTitle } from '@/components/ui/page-title';
 import { db } from '@/db';
 import { user } from '@/db/schema';
 import { getAvatarUrl, getRealName } from '@/lib/queries/public-profile';
@@ -55,19 +56,17 @@ export default async function DevelopersPage() {
       <div className="mx-auto max-w-[1200px]">
         <div className="mb-8">
           <p className="eyebrow m-0 mb-2">Directory</p>
-          <h1 className="m-0 text-[length:var(--t-3xl)] font-medium tracking-[-0.022em]">
-            Find Developers
-          </h1>
-          <p className="mt-2 max-w-[640px] text-[length:var(--t-lg)] text-[var(--ink-2)]">
+          <PageTitle>Find Developers</PageTitle>
+          <p className="text-ink-2 mt-2 max-w-[640px] text-lg">
             Search and filter through our community of talented developers
           </p>
         </div>
 
         <DevelopersBrowser initialUsers={enrichedUsers} />
 
-        <div className="mt-16 flex flex-col items-center gap-4 rounded-[14px] border border-[var(--hairline)] bg-[var(--paper-2)] px-8 py-12 text-center">
-          <h2 className="m-0 text-[length:var(--t-2xl)] font-medium">Want to join?</h2>
-          <p className="m-0 max-w-[560px] text-[length:var(--t-base)] text-[var(--ink-2)]">
+        <div className="border-hairline bg-paper-2 mt-16 flex flex-col items-center gap-4 rounded-[14px] border px-8 py-12 text-center">
+          <h2 className="m-0 text-2xl font-medium">Want to join?</h2>
+          <p className="text-ink-2 m-0 max-w-[560px] text-base">
             Build your developer portfolio and showcase your skills to the community.
           </p>
           <Button size="lg" asChild>

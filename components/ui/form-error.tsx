@@ -8,7 +8,7 @@ type Props = {
 export function FormError({ children, className }: Props) {
   if (!children) return null;
   return (
-    <p className={cn('text-xs', className)} style={{ color: 'var(--danger)' }}>
+    <p className={cn('text-danger text-xs', className)} role="alert">
       {children}
     </p>
   );

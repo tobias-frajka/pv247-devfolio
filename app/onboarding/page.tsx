@@ -14,10 +14,7 @@ export default async function OnboardingPage() {
         <div className="flex flex-col gap-2">
           <div className="eyebrow">welcome, {session.user.name?.split(' ')[0]}</div>
           <h1 className="m-0 text-2xl font-medium tracking-[-0.02em]">Pick a username</h1>
-          <p
-            className="m-0 leading-[1.5]"
-            style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
-          >
+          <p className="text-ink-2 m-0 text-sm leading-[1.5]">
             Your portfolio will live at{' '}
             <span className="text-foreground font-mono">devfolio.app/your-name</span>. 3–20
             characters, lowercase letters, digits, and hyphens. Must start with a letter.

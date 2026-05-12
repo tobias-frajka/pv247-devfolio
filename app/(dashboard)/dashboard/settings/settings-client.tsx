@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageDescription, PageTitle } from '@/components/ui/page-title';
 import { usernameSchema } from '@/schemas/username';
 import { deleteAccount, signOutAction } from '@/server-actions/account';
 import { changeUsername } from '@/server-actions/username';
@@ -31,15 +33,8 @@ export function SettingsClient({ currentUsername, email }: Props) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <h1
-          className="m-0"
-          style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-        >
-          Settings
-        </h1>
-        <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
-          Manage your account.
-        </p>
+        <PageTitle>Settings</PageTitle>
+        <PageDescription>Manage your account.</PageDescription>
       </div>
 
       <div className="flex max-w-2xl flex-col gap-6">
@@ -60,16 +55,10 @@ function SectionCard({
   tone?: 'default' | 'danger';
   children: React.ReactNode;
 }) {
-  const borderClass =
-    tone === 'danger' ? 'border-[var(--danger)]/40' : 'border-[var(--hairline-soft)]';
+  const borderClass = tone === 'danger' ? 'border-danger/40' : 'border-hairline-soft';
   return (
-    <section className={`rounded-lg border ${borderClass} bg-[var(--paper-2)] p-5`}>
-      <h2
-        className="m-0 mb-3"
-        style={{ fontSize: 'var(--t-xl)', fontWeight: 500, letterSpacing: '-0.012em' }}
-      >
-        {title}
-      </h2>
+    <section className={`rounded-lg border ${borderClass} bg-paper-2 p-5`}>
+      <h2 className="m-0 mb-3 text-xl font-medium tracking-tight">{title}</h2>
       {children}
     </section>
   );
@@ -84,8 +73,6 @@ type ChangeStatus =
   | { kind: 'idle' }
   | { kind: 'confirming'; from: string; to: string }
   | { kind: 'submitting'; from: string; to: string }
-  | { kind: 'saved' }
-  | { kind: 'no-change' }
   | { kind: 'error'; code: 'taken' | 'invalid' | 'unknown' };
 
 type ChangeErrorCode = Extract<ChangeStatus, { kind: 'error' }>['code'];
@@ -113,16 +100,9 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
 
   const usernameField = register('username');
 
-  // auto-clear transient confirmations after 2s
-  useEffect(() => {
-    if (status.kind !== 'saved' && status.kind !== 'no-change') return;
-    const t = setTimeout(() => setStatus({ kind: 'idle' }), 2000);
-    return () => clearTimeout(t);
-  }, [status.kind]);
-
   const onSubmit = form.handleSubmit(({ username }) => {
     if (username === currentUsername) {
-      setStatus({ kind: 'no-change' });
+      toast.info('No changes');
       return;
     }
     setStatus({ kind: 'confirming', from: currentUsername, to: username });
@@ -135,8 +115,9 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
     startTransition(async () => {
       const result = await changeUsername(to);
       if (result.ok) {
-        setStatus({ kind: 'saved' });
+        toast.success('Username updated');
         form.reset({ username: to });
+        setStatus({ kind: 'idle' });
         router.refresh();
         return;
       }
@@ -166,10 +147,10 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
               return usernameField.onChange(e);
             }}
           />
-          <p className="m-0 text-xs" style={{ color: 'var(--ink-3)' }}>
+          <p className="text-ink-3 m-0 text-xs">
             3-20 chars, lowercase letters, digits, hyphens. Must start with a letter.
           </p>
-          <p className="m-0 text-xs" style={{ color: 'var(--warn)' }}>
+          <p className="text-warn m-0 text-xs">
             Changing your username breaks any existing links to{' '}
             <span className="font-mono">/{currentUsername}</span>.
           </p>
@@ -180,16 +161,6 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
           <Button type="submit" disabled={isPending}>
             Save username
           </Button>
-          {status.kind === 'saved' && (
-            <span className="text-sm" style={{ color: 'var(--accent)' }}>
-              Saved
-            </span>
-          )}
-          {status.kind === 'no-change' && (
-            <span className="text-sm" style={{ color: 'var(--ink-2)' }}>
-              No changes
-            </span>
-          )}
           {status.kind === 'error' && (
             <FormError className="text-sm">{changeErrorCopy[status.code]}</FormError>
           )}
@@ -205,15 +176,13 @@ function AccountSection({ currentUsername }: { currentUsername: string }) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
-            <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
-              You&apos;re changing:
-            </p>
+            <p className="text-ink-2 m-0 text-sm">You&apos;re changing:</p>
             {(status.kind === 'confirming' || status.kind === 'submitting') && (
               <p className="m-0 font-mono text-sm">
                 /{status.from} → /{status.to}
               </p>
             )}
-            <p className="m-0 text-sm" style={{ color: 'var(--warn)' }}>
+            <p className="text-warn m-0 text-sm">
               Old links to{' '}
               <span className="font-mono">
                 /{status.kind === 'confirming' || status.kind === 'submitting' ? status.from : ''}
@@ -246,7 +215,7 @@ function SessionSection({ email }: { email: string }) {
   return (
     <SectionCard title="Session">
       <div className="flex flex-col gap-3">
-        <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
+        <p className="text-ink-2 m-0 text-sm">
           Signed in as <span className="font-mono">{email}</span>
         </p>
         <form action={signOutAction}>
@@ -316,7 +285,7 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
   return (
     <SectionCard title="Danger zone" tone="danger">
       <div className="flex flex-col gap-3">
-        <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
+        <p className="text-ink-2 m-0 text-sm">
           Permanently deletes your portfolio and frees{' '}
           <span className="font-mono">/{currentUsername}</span> for someone else to claim. This
           can&apos;t be undone.
@@ -335,13 +304,8 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
-            <p className="m-0 text-sm" style={{ color: 'var(--ink-2)' }}>
-              This permanently removes:
-            </p>
-            <ul
-              className="m-0 flex list-disc flex-col gap-1 pl-5 text-sm"
-              style={{ color: 'var(--ink-2)' }}
-            >
+            <p className="text-ink-2 m-0 text-sm">This permanently removes:</p>
+            <ul className="text-ink-2 m-0 flex list-disc flex-col gap-1 pl-5 text-sm">
               <li>your profile (name, headline, bio, avatar)</li>
               <li>your projects, skills, experience, socials</li>
               <li>
@@ -349,9 +313,7 @@ function DangerSection({ currentUsername }: { currentUsername: string }) {
                 others)
               </li>
             </ul>
-            <p className="m-0 text-sm" style={{ color: 'var(--danger)' }}>
-              This can&apos;t be undone.
-            </p>
+            <p className="text-danger m-0 text-sm">This can&apos;t be undone.</p>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="delete-confirm">
                 Type <span className="font-mono">{currentUsername}</span> to confirm:

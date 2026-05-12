@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { Link as LinkIcon, Briefcase, Globe, Mail, AtSign } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
 import { PublicProfile } from '@/components/public-profile/public-profile';
@@ -13,7 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormError } from '@/components/ui/form-error';
+import { PageDescription, PageTitle } from '@/components/ui/page-title';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '@/db/schema/social';
+import { httpUrl } from '@/schemas/shared';
 import { upsertManySocials } from '@/server-actions/social';
 import type { ProfileData } from '@/types/profile-data';
 
@@ -48,13 +51,11 @@ const PLATFORM_META: Record<
   }
 };
 
-const httpUrl = z.union([
-  z.literal(''),
-  z
-    .url()
-    .refine((u: string) => /^https?:/i.test(u), { message: 'Must be a valid http or https URL' })
-]);
-
+// Form is intentionally map-shaped (one input per platform) so the user can leave any
+// platform blank without removing the row. The canonical `socialSchema` in
+// schemas/social.ts is per-record; the server action validates each non-empty entry
+// against it. The shared `httpUrl` validator (schemas/shared.ts) keeps the URL rules
+// (https-only, empty allowed) in one place.
 const socialsFormSchema = z.object({
   github: httpUrl,
   linkedin: httpUrl,
@@ -95,7 +96,6 @@ export function SocialsForm({
   previewSeed
 }: Props) {
   const [mode, setMode] = useState<PreviewMode>('edit');
-  const [saved, setSaved] = useState(false);
 
   const existing = useMemo(
     () => Object.fromEntries(initialSocials.map(s => [s.platform, s.url])),
@@ -135,12 +135,9 @@ export function SocialsForm({
   };
 
   const saveMutation = useMutation({
-    mutationFn: (data: SocialsFormValues) =>
-      upsertManySocials(data as Record<SocialPlatform, string>),
-    onSuccess: () => {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }
+    mutationFn: (data: SocialsFormValues) => upsertManySocials(data),
+    onSuccess: () => toast.success('Socials saved'),
+    onError: err => toast.error(err.message)
   });
 
   const onSubmit = form.handleSubmit(data => saveMutation.mutate(data));
@@ -149,15 +146,10 @@ export function SocialsForm({
     <div className="flex flex-col gap-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h1
-            className="m-0"
-            style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-          >
-            Socials
-          </h1>
-          <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}>
+          <PageTitle>Socials</PageTitle>
+          <PageDescription>
             Leave blank to hide a platform. Changes apply to your public profile.
-          </p>
+          </PageDescription>
         </div>
         <PreviewToggle mode={mode} onChange={setMode} />
       </div>
@@ -172,7 +164,7 @@ export function SocialsForm({
             return (
               <div key={platform} className="flex flex-col gap-1.5">
                 <Label htmlFor={`social-${platform}`} className="flex items-center gap-2">
-                  <span className="text-[var(--ink-3)]">{meta.icon}</span>
+                  <span className="text-ink-3">{meta.icon}</span>
                   {meta.label}
                 </Label>
                 <Input
@@ -190,11 +182,6 @@ export function SocialsForm({
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving…' : 'Save socials'}
             </Button>
-            {saved && (
-              <span className="text-sm" style={{ color: 'var(--ok)' }}>
-                Saved
-              </span>
-            )}
             <FormError className="text-sm">{saveMutation.error?.message}</FormError>
           </div>
         </form>

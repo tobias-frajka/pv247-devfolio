@@ -14,44 +14,35 @@ const tier = (remaining: number, limit: number): Tier => {
   return 'ok';
 };
 
-const tierColor: Record<Tier, string> = {
-  ok: 'var(--brand)',
-  warn: 'var(--warn)',
-  danger: 'var(--danger)'
+const tierTextClass: Record<Tier, string> = {
+  ok: 'text-brand',
+  warn: 'text-warn',
+  danger: 'text-danger'
 };
 
-const tierBar: Record<Tier, string> = {
-  ok: 'bg-[var(--brand)]',
-  warn: 'bg-[var(--warn)]',
-  danger: 'bg-[var(--danger)]'
+const tierBarClass: Record<Tier, string> = {
+  ok: 'bg-brand',
+  warn: 'bg-warn',
+  danger: 'bg-danger'
 };
 
 export const AiUsageCard = async ({ userId }: AiUsageCardProps) => {
   const { used, limit } = await getAiUsageToday(userId);
   const remaining = Math.max(0, limit - used);
-  const pct = Math.min(100, Math.round((used / limit) * 100));
+  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const exhausted = remaining === 0;
   const t = tier(remaining, limit);
 
   return (
-    <div className="rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4">
+    <div className="border-hairline-soft bg-paper-2 rounded-lg border p-4">
       <div className="flex items-center justify-between">
         <div className="eyebrow">ai usage</div>
-        <div
-          className="font-mono tabular-nums"
-          style={{ fontSize: 'var(--t-xs)', color: 'var(--ink-3)' }}
-        >
+        <div className="text-ink-3 font-mono text-xs tabular-nums">
           {used} / {limit}
         </div>
       </div>
-      <Progress value={pct} className="mt-3 h-2" indicatorClassName={tierBar[t]} />
-      <p
-        className="m-0 mt-3"
-        style={{
-          fontSize: 'var(--t-sm)',
-          color: exhausted ? 'var(--danger)' : tierColor[t]
-        }}
-      >
+      <Progress value={pct} className="mt-3 h-2" indicatorClassName={tierBarClass[t]} />
+      <p className={`m-0 mt-3 text-sm ${exhausted ? 'text-danger' : tierTextClass[t]}`}>
         {exhausted
           ? 'Daily limit reached — resets at 00:00 UTC.'
           : `${remaining} ${remaining === 1 ? 'request' : 'requests'} left today.`}

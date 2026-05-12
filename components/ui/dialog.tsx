@@ -29,14 +29,14 @@ function DialogContent({
       <DialogOverlay />
       <Dialog.Content
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--hairline)] bg-[var(--paper)] p-6 shadow-2xl outline-none',
+          'border-hairline bg-paper fixed top-1/2 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border p-6 shadow-2xl outline-none',
           'max-h-[90vh] overflow-y-auto',
           className
         )}
         {...props}
       >
         {children}
-        <Dialog.Close className="absolute top-4 right-4 rounded-sm p-1 text-[var(--ink-3)] outline-none hover:text-[var(--ink)]">
+        <Dialog.Close className="text-ink-3 hover:text-ink focus-visible:ring-ring absolute top-4 right-4 rounded-sm p-1 outline-none focus-visible:ring-2">
           <X size={16} />
           <span className="sr-only">Close</span>
         </Dialog.Close>
@@ -57,13 +57,7 @@ function DialogDescription({
   className,
   ...props
 }: React.ComponentProps<typeof Dialog.Description>) {
-  return (
-    <Dialog.Description
-      className={cn('m-0 text-sm', className)}
-      style={{ color: 'var(--ink-2)' }}
-      {...props}
-    />
-  );
+  return <Dialog.Description className={cn('text-ink-2 m-0 text-sm', className)} {...props} />;
 }
 
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

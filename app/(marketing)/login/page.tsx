@@ -15,10 +15,7 @@ export default async function LoginPage() {
       <div className="flex w-full max-w-[380px] flex-col items-center gap-8 text-center">
         <div className="flex flex-col gap-2">
           <h1 className="m-0 text-2xl font-medium tracking-[-0.02em]">Sign in to DevFolio</h1>
-          <p
-            className="m-0 leading-[1.5]"
-            style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-2)' }}
-          >
+          <p className="text-ink-2 m-0 text-sm leading-[1.5]">
             We use GitHub to authenticate. Your portfolio lives at devfolio.app/your-name.
           </p>
         </div>

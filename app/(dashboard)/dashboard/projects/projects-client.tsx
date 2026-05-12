@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Link as LinkIcon, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { PreviewToggle, type PreviewMode } from '@/components/dashboard/preview-toggle';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { FormError } from '@/components/ui/form-error';
+import { PageTitle } from '@/components/ui/page-title';
 import {
   DialogRoot,
   DialogContent,
@@ -28,7 +30,9 @@ import { improveDescription } from '@/server-actions/ai';
 import { createProject, deleteProject, updateProject } from '@/server-actions/project';
 import type { ProfileData } from '@/types/profile-data';
 
-// Strip .default([]) from techStack so the form type has techStack: string[] (not optional)
+// Form schema narrows techStack from `string[] | undefined` (canonical projectSchema has
+// .default([])) to a required `string[]`. The canonical default still applies on the server
+// side after parsing; the form always sends an explicit (possibly empty) array.
 const projectFormSchema = projectSchema.extend({
   techStack: z.array(z.string().trim().min(1).max(40)).max(20)
 });
@@ -79,14 +83,11 @@ function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]
   return (
     <div className="border-input focus-within:border-ring focus-within:ring-ring/50 flex min-h-[38px] flex-wrap gap-1.5 rounded-md border bg-transparent px-3 py-2 text-sm focus-within:ring-[3px]">
       {value.map(tag => (
-        <span
-          key={tag}
-          className="flex items-center gap-1 rounded bg-[var(--paper-3)] px-2 py-0.5 text-xs"
-        >
+        <span key={tag} className="bg-paper-3 flex items-center gap-1 rounded px-2 py-0.5 text-xs">
           {tag}
           <button
             type="button"
-            className="text-[var(--ink-3)] hover:text-[var(--ink)]"
+            className="text-ink-3 hover:text-ink"
             onClick={() => onChange(value.filter(t => t !== tag))}
           >
             ×
@@ -126,7 +127,6 @@ function ProjectDialogForm({
   isPending: boolean;
   error: Error | null;
 }) {
-  const router = useRouter();
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: {
@@ -148,13 +148,16 @@ function ProjectDialogForm({
 
   const techStack = useWatch({ control, name: 'techStack' });
 
+  const router = useRouter();
   const improveMutation = useMutation({
     mutationFn: improveDescription,
     onSuccess: result => {
       setValue('description', result ?? '');
+      // Re-render dashboard layout so the sidebar AiUsageCard reflects the bumped quota.
       router.refresh();
+      toast.success('Description improved');
     },
-    onError: () => router.refresh()
+    onError: err => toast.error(err.message)
   });
 
   const onSubmit = form.handleSubmit(data => onSave(data));
@@ -242,7 +245,6 @@ export function ProjectsClient({
   fallbackAvatar,
   previewSeed
 }: Props) {
-  const router = useRouter();
   const [mode, setMode] = useState<PreviewMode>('edit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
@@ -263,7 +265,8 @@ export function ProjectsClient({
 
   const deleteMutation = useMutation({
     mutationFn: deleteProject,
-    onSuccess: () => router.refresh()
+    onSuccess: () => toast.success('Project deleted'),
+    onError: err => toast.error(err.message)
   });
 
   const saveMutation = useMutation({
@@ -280,10 +283,11 @@ export function ProjectsClient({
         await createProject(data);
       }
     },
-    onSuccess: () => {
-      router.refresh();
+    onSuccess: (_, vars) => {
+      toast.success(vars.editingId ? 'Project updated' : 'Project added');
       setDialogOpen(false);
-    }
+    },
+    onError: err => toast.error(err.message)
   });
 
   const openAdd = () => {
@@ -306,12 +310,7 @@ export function ProjectsClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1
-          className="m-0"
-          style={{ fontSize: 'var(--t-3xl)', fontWeight: 500, letterSpacing: '-0.022em' }}
-        >
-          Projects
-        </h1>
+        <PageTitle>Projects</PageTitle>
         <div className="flex gap-2">
           <PreviewToggle mode={mode} onChange={setMode} />
           {mode === 'edit' && (
@@ -324,10 +323,7 @@ export function ProjectsClient({
 
       {mode === 'edit' ? (
         projects.length === 0 ? (
-          <div
-            className="rounded-lg border border-dashed border-[var(--hairline)] p-10 text-center"
-            style={{ color: 'var(--ink-3)' }}
-          >
+          <div className="border-hairline text-ink-3 rounded-lg border border-dashed p-10 text-center">
             <p className="m-0 text-sm">No projects yet. Add your first one.</p>
           </div>
         ) : (
@@ -336,20 +332,17 @@ export function ProjectsClient({
               <li
                 key={p.id}
                 id={`project-${p.id}`}
-                className="flex scroll-mt-6 items-start justify-between gap-4 rounded-lg border border-[var(--hairline-soft)] bg-[var(--paper-2)] p-4"
+                className="border-hairline-soft bg-paper-2 flex scroll-mt-6 items-start justify-between gap-4 rounded-lg border p-4"
               >
                 <div className="flex min-w-0 flex-col gap-2">
                   <p className="m-0 text-sm font-medium">{p.title}</p>
-                  <p className="m-0 line-clamp-2 text-xs" style={{ color: 'var(--ink-2)' }}>
-                    {p.description}
-                  </p>
+                  <p className="text-ink-2 m-0 line-clamp-2 text-xs">{p.description}</p>
                   {p.techStack.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {p.techStack.map(tag => (
                         <span
                           key={tag}
-                          className="rounded bg-[var(--paper-3)] px-2 py-0.5 text-xs"
-                          style={{ color: 'var(--ink-2)' }}
+                          className="bg-paper-3 text-ink-2 rounded px-2 py-0.5 text-xs"
                         >
                           {tag}
                         </span>
@@ -362,8 +355,7 @@ export function ProjectsClient({
                         href={p.githubUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1 text-xs hover:underline"
-                        style={{ color: 'var(--ink-3)' }}
+                        className="text-ink-3 flex items-center gap-1 text-xs hover:underline"
                       >
                         <LinkIcon size={12} /> GitHub
                       </a>
@@ -373,8 +365,7 @@ export function ProjectsClient({
                         href={p.liveUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1 text-xs hover:underline"
-                        style={{ color: 'var(--ink-3)' }}
+                        className="text-ink-3 flex items-center gap-1 text-xs hover:underline"
                       >
                         <ExternalLink size={12} /> Live
                       </a>

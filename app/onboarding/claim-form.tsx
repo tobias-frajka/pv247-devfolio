@@ -29,13 +29,8 @@ export function ClaimForm() {
 
   return (
     <form action={onSubmit} className="flex flex-col gap-3">
-      <div className="focus-within:border-ring flex items-stretch gap-0 overflow-hidden rounded-md border border-[var(--hairline)] bg-[var(--paper-2)]">
-        <span
-          className="flex items-center px-3 font-mono"
-          style={{ fontSize: 'var(--t-sm)', color: 'var(--ink-3)' }}
-        >
-          devfolio.app/
-        </span>
+      <div className="focus-within:border-ring border-hairline bg-paper-2 flex items-stretch gap-0 overflow-hidden rounded-md border">
+        <span className="text-ink-3 flex items-center px-3 font-mono text-sm">devfolio.app/</span>
         <input
           name="username"
           autoFocus
@@ -44,11 +39,11 @@ export function ClaimForm() {
           maxLength={20}
           placeholder="your-name"
           disabled={pending}
-          className="text-foreground flex-1 bg-transparent py-3 pr-3 font-mono outline-none placeholder:text-[var(--ink-3)]"
+          className="text-foreground placeholder:text-ink-3 flex-1 bg-transparent py-3 pr-3 font-mono outline-none"
         />
       </div>
       {error && (
-        <p className="m-0" style={{ fontSize: 'var(--t-sm)', color: 'var(--danger)' }}>
+        <p className="text-danger m-0 text-sm" role="alert">
           {error}
         </p>
       )}

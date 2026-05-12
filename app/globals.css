@@ -161,6 +161,33 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* DevFolio semantic colors → text-ink-2, bg-paper-2, border-hairline, text-danger, etc. */
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+
+  /* DevFolio typography scale → text-xs … text-5xl */
+  --text-xs: var(--t-xs);
+  --text-sm: var(--t-sm);
+  --text-base: var(--t-base);
+  --text-md: var(--t-md);
+  --text-lg: var(--t-lg);
+  --text-xl: var(--t-xl);
+  --text-2xl: var(--t-2xl);
+  --text-3xl: var(--t-3xl);
+  --text-4xl: var(--t-4xl);
+  --text-5xl: var(--t-5xl);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 
@@ -291,6 +318,35 @@ body {
 .page-enter {
   animation: devfolio-page-enter 280ms ease-out both;
   will-change: opacity;
+}
+
+/* ---------- Sonner toast — match DevFolio palette ---------- */
+[data-sonner-toaster][data-sonner-theme='dark'] {
+  --normal-bg: var(--paper-2);
+  --normal-bg-hover: var(--paper-3);
+  --normal-border: var(--hairline);
+  --normal-border-hover: var(--hairline);
+  --normal-text: var(--ink);
+
+  --success-bg: var(--paper-2);
+  --success-border: var(--hairline);
+  --success-text: var(--brand);
+
+  --info-bg: var(--paper-2);
+  --info-border: var(--hairline);
+  --info-text: var(--ink-2);
+
+  --warning-bg: var(--paper-2);
+  --warning-border: var(--hairline);
+  --warning-text: var(--warn);
+
+  --error-bg: var(--paper-2);
+  --error-border: var(--hairline);
+  --error-text: var(--danger);
+}
+
+[data-sonner-toaster][data-sonner-theme='dark'] [data-description] {
+  color: var(--ink-2);
 }
 
 @media (prefers-reduced-motion: reduce) {

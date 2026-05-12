@@ -37,7 +37,7 @@ export function SignInButton() {
         {pending ? 'Redirecting…' : 'Continue with GitHub →'}
       </Button>
       {error && (
-        <p className="m-0 text-center" style={{ fontSize: 'var(--t-sm)', color: 'var(--danger)' }}>
+        <p className="text-danger m-0 text-center text-sm" role="alert">
           {error}
         </p>
       )}
